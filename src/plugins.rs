@@ -1,7 +1,7 @@
 use crate::collision::b2Shape;
 use crate::dynamics::{
-    b2Body, b2Fixture, b2Joint, b2PrismaticJoint, b2RevoluteJoint, b2World, b2WorldSettings,
-    ExternalForce, JointPtr,
+    b2Body, b2DistanceJoint, b2Fixture, b2Joint, b2PrismaticJoint, b2RevoluteJoint, b2World,
+    b2WorldSettings, ExternalForce, JointPtr,
 };
 use crate::internal::to_b2Vec2;
 use crate::particles::{b2ParticleGroup, b2ParticleSystem};
@@ -32,6 +32,7 @@ impl Plugin for LiquidFunPlugin {
                     create_fixtures,
                     create_revolute_joints,
                     create_prismatic_joints,
+                    create_distance_joints,
                     create_particle_systems,
                     create_particle_groups,
                     destroy_removed_fixtures,
@@ -40,6 +41,7 @@ impl Plugin for LiquidFunPlugin {
                     sync_bodies_to_world,
                     sync_revolute_joints_to_world,
                     sync_prismatic_joints_to_world,
+                    sync_distance_joints_to_world,
                     apply_forces,
                     step_physics,
                     sync_bodies_from_world,
@@ -143,6 +145,30 @@ fn create_prismatic_joints(
         );
     }
 }
+
+fn create_distance_joints(
+    mut b2_world: NonSendMut<b2World>,
+    mut added: Query<(Entity, &b2Joint, &b2DistanceJoint), Added<b2DistanceJoint>>,
+    mut bodies: Query<(Entity, &mut b2Body)>,
+) {
+    for (joint_entity, joint, distance_joint) in added.iter_mut() {
+        let [mut body_a, mut body_b] = bodies
+            .get_many_mut([*joint.body_a(), *joint.body_b()])
+            .unwrap();
+        let joint_ptr = distance_joint.create_ffi_joint(
+            &mut b2_world,
+            body_a.0,
+            body_b.0,
+            joint.collide_connected(),
+        );
+        b2_world.register_joint(
+            (joint_entity, &joint, joint_ptr),
+            (body_a.0, &mut body_a.1),
+            (body_b.0, &mut body_b.1),
+        );
+    }
+}
+
 fn create_particle_systems(
     mut b2_world: NonSendMut<b2World>,
     mut added: Query<(Entity, &mut b2ParticleSystem), Added<b2ParticleSystem>>,
@@ -218,6 +244,18 @@ fn sync_prismatic_joints_to_world(
     for (entity, joint) in joints.iter() {
         let joint_ptr = b2_world.get_joint_ptr(&entity).unwrap();
         if let JointPtr::Prismatic(joint_ptr) = joint_ptr {
+            joint.sync_to_world(joint_ptr.as_mut());
+        }
+    }
+}
+
+fn sync_distance_joints_to_world(
+    mut b2_world: NonSendMut<b2World>,
+    joints: Query<(Entity, &b2DistanceJoint), Changed<b2DistanceJoint>>,
+) {
+    for (entity, joint) in joints.iter() {
+        let joint_ptr = b2_world.get_joint_ptr(&entity).unwrap();
+        if let JointPtr::Distance(joint_ptr) = joint_ptr {
             joint.sync_to_world(joint_ptr.as_mut());
         }
     }

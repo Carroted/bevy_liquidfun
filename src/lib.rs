@@ -14,6 +14,9 @@ pub mod dynamics {
 
         mod prismatic_joint;
         pub use prismatic_joint::*;
+
+        mod distance_joint;
+        pub use distance_joint::*;
     }
     mod fixture;
     mod ray_cast;

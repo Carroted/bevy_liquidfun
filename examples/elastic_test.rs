@@ -37,7 +37,7 @@ fn main() {
 fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle {
         projection: OrthographicProjection {
-            scale: 0.03,
+            scale: 0.007,
             far: 1000.,
             near: -1000.,
             ..OrthographicProjection::default()
@@ -60,10 +60,10 @@ fn setup_ground(mut commands: Commands) {
         {
             let shape = b2Shape::Polygon {
                 vertices: vec![
-                    Vec2::new(-40., -1.),
-                    Vec2::new(40., -1.),
-                    Vec2::new(40., 0.),
-                    Vec2::new(-40., 0.),
+                    Vec2::new(-4., -1.),
+                    Vec2::new(4., -1.),
+                    Vec2::new(4., 0.),
+                    Vec2::new(-4., 0.),
                 ],
             };
 
@@ -77,10 +77,10 @@ fn setup_ground(mut commands: Commands) {
         {
             let shape = b2Shape::Polygon {
                 vertices: vec![
-                    Vec2::new(-40., -0.1),
-                    Vec2::new(-20., -0.1),
-                    Vec2::new(-20., 2.),
-                    Vec2::new(-40., 3.),
+                    Vec2::new(-4., -0.1),
+                    Vec2::new(-2., -0.1),
+                    Vec2::new(-2., 2.),
+                    Vec2::new(-4., 3.),
                 ],
             };
             let fixture_def = b2FixtureDef::new(shape, 0.);
@@ -93,10 +93,10 @@ fn setup_ground(mut commands: Commands) {
         {
             let shape = b2Shape::Polygon {
                 vertices: vec![
-                    Vec2::new(20., -0.1),
-                    Vec2::new(40., -0.1),
-                    Vec2::new(40., 3.),
-                    Vec2::new(20., 2.),
+                    Vec2::new(2., -0.1),
+                    Vec2::new(4., -0.1),
+                    Vec2::new(4., 3.),
+                    Vec2::new(2., 2.),
                 ],
             };
             let fixture_def = b2FixtureDef::new(shape, 0.);
@@ -139,11 +139,11 @@ fn setup_particles(mut commands: Commands) {
         .id();
 
     let shape = b2Shape::Circle {
-        radius: 20.,
-        position: Vec2::new(0., 15.),
+        radius: 2.,
+        position: Vec2::new(0., 3.),
     };
     let particle_group_def = b2ParticleGroupDef {
-        flags: b2ParticleFlags::WaterParticle,
+        flags: b2ParticleFlags::ElasticParticle,
         shape,
     };
     let particle_group = b2ParticleGroup::new(particle_system_entity, &particle_group_def);

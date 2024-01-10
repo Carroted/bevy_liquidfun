@@ -18,19 +18,19 @@ pub struct b2DistanceJoint {
     local_anchor_b: Vec2,
 
     /// The minimum distance between the two anchors.
-    min_length: f32,
+    pub min_length: f32,
 
     /// The maximum distance between the two anchors.
-    max_length: f32,
+    pub max_length: f32,
 
     /// The linear stiffness in N/m.
-    stiffness: f32,
+    pub stiffness: f32,
 
     /// The linear damping in N*s/m.
-    damping: f32,
+    pub damping: f32,
 
     /// The rest length that the joint targets.
-    length: f32,
+    pub length: f32,
 }
 
 impl b2DistanceJoint {

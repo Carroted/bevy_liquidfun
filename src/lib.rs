@@ -17,6 +17,9 @@ pub mod dynamics {
 
         mod distance_joint;
         pub use distance_joint::*;
+
+        mod mouse_joint;
+        pub use mouse_joint::*;
     }
     mod fixture;
     mod ray_cast;

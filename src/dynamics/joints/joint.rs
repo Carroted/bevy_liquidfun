@@ -51,7 +51,7 @@ pub enum b2JointType {
     Prismatic,
     Distance, // TODO
     _Pulley,
-    _Mouse,
+    Mouse,
     _Gear,
     _Wheel,
     _Weld,
@@ -66,7 +66,7 @@ pub(crate) enum JointPtr<'a> {
     Prismatic(Pin<&'a mut ffi::b2PrismaticJoint>),
     Distance(Pin<&'a mut ffi::b2DistanceJoint>),
     _Pulley,
-    _Mouse,
+    Mouse(Pin<&'a mut ffi::b2MouseJoint>),
     _Gear,
     _Wheel,
     _Weld,

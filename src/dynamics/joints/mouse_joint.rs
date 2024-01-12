@@ -71,7 +71,7 @@ impl b2MouseJoint {
     }
 
     pub(crate) fn sync_to_world(&self, mut joint_ptr: Pin<&mut ffi::b2MouseJoint>) {
-        joint_ptr.as_mut().SetTarget(to_b2Vec2(&self.target));
+        joint_ptr.as_mut()..SetTarget(to_b2Vec2(&self.target));
     }
 }
 

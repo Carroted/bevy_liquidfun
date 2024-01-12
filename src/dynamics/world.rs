@@ -34,6 +34,78 @@ impl Default for b2WorldSettings {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Clone)]
+pub struct b2AABB {
+    pub lower_bound: Vec2,
+    pub upper_bound: Vec2,
+}
+
+impl b2AABB {
+    pub fn new(lower_bound: Vec2, upper_bound: Vec2) -> Self {
+        Self {
+            lower_bound,
+            upper_bound,
+        }
+    }
+}
+
+// time for Query Callbacks, for now we only implement fixture callback. for reference this is how raycast does it
+/* impl b2RayCastCallback for b2RayCastAny {
+    type Result = Option<b2RayCastHit>;
+
+    fn report_fixture(
+        &mut self,
+        entity: Entity,
+        point: &Vec2,
+        normal: &Vec2,
+        _fraction: f32,
+    ) -> f32 {
+        self.result = Some(b2RayCastHit {
+            entity,
+            point: *point,
+            normal: *normal,
+        });
+        0.
+    }
+
+    fn into_result(self) -> Self::Result {
+        self.result
+    }
+} */
+// lets do the same for query_aabb
+#[derive(Debug)]
+#[allow(non_camel_case_types)]
+pub struct b2QueryAABB {
+    result: Vec<Entity>,
+}
+
+impl b2QueryAABB {
+    pub fn new() -> Self {
+        b2QueryAABB { result: Vec::new() }
+    }
+}
+
+pub trait b2QueryCallback {
+    type Result;
+
+    fn report_fixture(&mut self, entity: Entity) -> bool;
+    fn into_result(self) -> Self::Result;
+}
+
+impl b2QueryCallback for b2QueryAABB {
+    type Result = Vec<Entity>;
+
+    fn report_fixture(&mut self, entity: Entity) -> bool {
+        self.result.push(entity);
+        true
+    }
+
+    fn into_result(self) -> Self::Result {
+        self.result
+    }
+}
+
+#[allow(non_camel_case_types)]
 pub struct b2World<'a> {
     ffi_world: Pin<Box<ffi::b2World>>,
 
@@ -263,5 +335,23 @@ impl<'a> b2World<'a> {
             .unwrap()
             .into_inner()
             .extract_hits()
+    }
+
+    pub fn query_aabb(
+        &mut self,
+        callback: &mut dyn b2QueryCallback<Result = Vec<Entity>>,
+        aabb: &b2AABB,
+    ) -> Vec<Entity> {
+        let mut ffi_aabb = ffi::b2AABB::new().within_box();
+        ffi_aabb.lowerBound = to_b2Vec2(&aabb.lower_bound);
+        ffi_aabb.upperBound = to_b2Vec2(&aabb.upper_bound);
+
+        let mut ffi_callback = ffi::b2QueryCallbackWrapper::new(callback).within_box();
+        unsafe {
+            self.ffi_world
+                .as_mut()
+                .QueryAABB(&mut ffi_callback, &ffi_aabb);
+        }
+        ffi_callback.into_result()
     }
 }

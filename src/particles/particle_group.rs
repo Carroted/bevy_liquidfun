@@ -12,6 +12,26 @@ use std::os::raw::c_uint;
 pub struct b2ParticleGroupDef {
     pub flags: b2ParticleFlags,
     pub shape: b2Shape,
+    pub position: Vec2,
+    pub angle: f32,
+    pub linear_velocity: Vec2,
+    pub angular_velocity: f32,
+}
+
+impl Default for b2ParticleGroupDef {
+    fn default() -> Self {
+        Self {
+            flags: b2ParticleFlags::WaterParticle,
+            shape: b2Shape::Circle {
+                radius: 1.0,
+                position: Vec2::default(),
+            },
+            position: Vec2::default(),
+            angle: 0.0,
+            linear_velocity: Vec2::default(),
+            angular_velocity: 0.0,
+        }
+    }
 }
 
 impl b2ParticleGroupDef {
@@ -24,10 +44,10 @@ impl b2ParticleGroupDef {
             return ffi::CreateParticleGroupDef(
                 flags,
                 uint32::from(0),
-                to_b2Vec2(&Vec2::ZERO),
-                0.,
-                to_b2Vec2(&Vec2::ZERO),
-                0.,
+                to_b2Vec2(&self.position),
+                self.angle,
+                to_b2Vec2(&self.linear_velocity),
+                self.angular_velocity,
                 1.,
                 ffi_shape,
                 0.,

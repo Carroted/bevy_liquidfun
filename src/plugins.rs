@@ -11,16 +11,9 @@ use crate::dynamics::{
 };
 use crate::internal::to_b2Vec2;
 use crate::particles::{b2ParticleGroup, b2ParticleSystem, b2ParticleSystemContacts};
+use crate::schedule::{LiquidFunSchedulePlugin, PhysicsUpdateStep};
+use crate::schedule::{PhysicsSchedule, PhysicsUpdate};
 use crate::utils::{DebugDrawFixtures, DebugDrawParticleSystem};
-
-#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
-pub enum LiquidFunSet {
-    ClearEvents,
-    SyncToPhysicsWorld,
-    ApplyForces,
-    Step,
-    SyncFromPhysicsWorld,
-}
 
 #[derive(Default)]
 pub struct LiquidFunPlugin {
@@ -35,87 +28,69 @@ impl LiquidFunPlugin {
 
 impl Plugin for LiquidFunPlugin {
     fn build(&self, app: &mut App) {
-        app.configure_sets(
-            PostUpdate,
-            (
-                LiquidFunSet::ClearEvents,
-                LiquidFunSet::SyncToPhysicsWorld,
-                LiquidFunSet::ApplyForces,
-                LiquidFunSet::Step,
-                LiquidFunSet::SyncFromPhysicsWorld,
+        app.add_plugins(LiquidFunSchedulePlugin)
+            .insert_resource(self.settings.clone())
+            .add_systems(
+                PhysicsSchedule,
+                (
+                    (
+                        clear_forces,
+                        clear_torques,
+                        clear_events::<b2BeginContactEvent>,
+                        clear_events::<b2EndContactEvent>,
+                    )
+                        .in_set(PhysicsUpdateStep::ClearEvents),
+                    (
+                        create_bodies,
+                        create_fixtures,
+                        create_revolute_joints,
+                        create_prismatic_joints,
+                        create_particle_systems,
+                        create_particle_groups,
+                        create_queued_particles,
+                        destroy_removed_fixtures,
+                        destroy_removed_bodies,
+                        destroy_queued_particles,
+                        apply_deferred,
+                        sync_bodies_to_world,
+                        sync_revolute_joints_to_world,
+                        sync_prismatic_joints_to_world,
+                    )
+                        .chain()
+                        .in_set(PhysicsUpdateStep::SyncToPhysicsWorld),
+                    (apply_forces, apply_torques, apply_gravity_scale)
+                        .chain()
+                        .in_set(PhysicsUpdateStep::ApplyForces),
+                    step_physics.in_set(PhysicsUpdateStep::Step),
+                    (
+                        sync_bodies_from_world,
+                        sync_particle_systems_from_world,
+                        send_contact_events,
+                        copy_particle_system_contacts,
+                        update_particle_body_contacts_components,
+                    )
+                        .chain()
+                        .in_set(PhysicsUpdateStep::SyncFromPhysicsWorld),
+                ),
             )
-                .chain(),
-        )
-        .insert_resource(self.settings.clone())
-        .insert_resource(PhysicsTimeAccumulator(0.))
-        .add_systems(PreUpdate, (clear_forces, clear_torques))
-        .add_systems(
-            PostUpdate,
-            (
-                (
-                    clear_events::<b2BeginContactEvent>,
-                    clear_events::<b2EndContactEvent>,
-                )
-                    .in_set(LiquidFunSet::ClearEvents),
-                (
-                    create_bodies,
-                    create_fixtures,
-                    create_revolute_joints,
-                    create_prismatic_joints,
-                    create_particle_systems,
-                    create_particle_groups,
-                    create_queued_particles,
-                    destroy_removed_fixtures,
-                    destroy_removed_bodies,
-                    destroy_queued_particles,
-                    apply_deferred,
-                    sync_bodies_to_world,
-                    sync_revolute_joints_to_world,
-                    sync_prismatic_joints_to_world,
-                )
-                    .chain()
-                    .in_set(LiquidFunSet::SyncToPhysicsWorld),
-                (apply_forces, apply_torques, apply_gravity_scale)
-                    .chain()
-                    .in_set(LiquidFunSet::ApplyForces),
-                (step_physics).in_set(LiquidFunSet::Step),
-                (
-                    sync_bodies_from_world,
-                    sync_particle_systems_from_world,
-                    update_transforms,
-                    send_contact_events,
-                    copy_particle_system_contacts,
-                    update_particle_body_contacts_components,
-                )
-                    .chain()
-                    .in_set(LiquidFunSet::SyncFromPhysicsWorld),
-            ),
-        )
-        .init_resource::<Events<b2BeginContactEvent>>()
-        .init_resource::<Events<b2EndContactEvent>>();
+            .add_systems(
+                Update,
+                update_transforms
+                    .after(PhysicsUpdate)
+                    .before(TransformSystem::TransformPropagate),
+            )
+            .init_resource::<Events<b2BeginContactEvent>>()
+            .init_resource::<Events<b2EndContactEvent>>();
     }
 }
 
-#[derive(Resource)]
-struct PhysicsTimeAccumulator(f32);
-
-fn step_physics(
-    mut b2_world: NonSendMut<b2World>,
-    settings: Res<b2WorldSettings>,
-    time: Res<Time>,
-    mut physics_time_accumulator: ResMut<PhysicsTimeAccumulator>,
-) {
-    physics_time_accumulator.0 += time.delta_seconds();
-
-    while physics_time_accumulator.0 >= settings.time_step {
-        b2_world.step(
-            settings.time_step,
-            settings.velocity_iterations,
-            settings.position_iterations,
-            settings.particle_iterations,
-        );
-        physics_time_accumulator.0 -= settings.time_step;
-    }
+fn step_physics(mut b2_world: NonSendMut<b2World>, settings: Res<b2WorldSettings>) {
+    b2_world.step(
+        settings.time_step,
+        settings.velocity_iterations,
+        settings.position_iterations,
+        settings.particle_iterations,
+    );
 }
 
 fn clear_forces(mut external_forces: Query<&mut ExternalForce>) {
@@ -450,14 +425,16 @@ fn update_particle_body_contacts_components(
 
 fn update_transforms(
     mut bodies: Query<(&b2Body, &mut Transform)>,
-    physics_time_accumulator: Res<PhysicsTimeAccumulator>,
+    // physics_time_accumulator: Res<PhysicsTimeAccumulator>,
 ) {
-    let extrapolation_time = physics_time_accumulator.0;
+    // let extrapolation_time = physics_time_accumulator.0;
     for (body, mut transform) in bodies.iter_mut() {
-        let extrapolated_position = body.position + body.linear_velocity * extrapolation_time;
-        transform.translation = extrapolated_position.extend(0.);
-        let extrapolated_rotation = body.angle + body.angular_velocity * extrapolation_time;
-        transform.rotation = Quat::from_rotation_z(extrapolated_rotation);
+        // let extrapolated_position = body.position + body.linear_velocity * extrapolation_time;
+        // transform.translation = extrapolated_position.extend(0.);
+        // let extrapolated_rotation = body.angle + body.angular_velocity * extrapolation_time;
+        // transform.rotation = Quat::from_rotation_z(extrapolated_rotation);
+        transform.translation = body.position.extend(0.);
+        transform.rotation = Quat::from_rotation_z(body.angle);
     }
 }
 pub struct LiquidFunDebugDrawPlugin;

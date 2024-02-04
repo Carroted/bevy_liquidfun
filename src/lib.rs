@@ -3,6 +3,7 @@ pub mod plugins;
 pub mod utils;
 
 pub(crate) mod internal;
+pub mod schedule;
 
 pub mod dynamics {
     mod body;

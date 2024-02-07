@@ -124,8 +124,8 @@ fn create_fixtures(
     mut bodies: Query<(Entity, &mut b2Body)>,
 ) {
     for (fixture_entity, mut fixture) in added.iter_mut() {
-        let mut body = bodies.get_mut(fixture.body()).unwrap();
-        b2_world.create_fixture((fixture_entity, &mut fixture), (body.0, &mut body.1));
+        let (body_entity, mut body) = bodies.get_mut(fixture.body()).unwrap();
+        b2_world.create_fixture((fixture_entity, &mut fixture), (body_entity, &mut body));
     }
 }
 

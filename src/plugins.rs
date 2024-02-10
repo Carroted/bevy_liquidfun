@@ -71,17 +71,23 @@ impl Plugin for LiquidFunPlugin {
                     )
                         .chain()
                         .in_set(PhysicsUpdateStep::SyncFromPhysicsWorld),
-                ),
+                )
+                    .run_if(world_exists),
             )
             .add_systems(
                 Update,
                 update_transforms
                     .after(PhysicsUpdate)
-                    .before(TransformSystem::TransformPropagate),
+                    .before(TransformSystem::TransformPropagate)
+                    .run_if(world_exists),
             )
             .init_resource::<Events<b2BeginContactEvent>>()
             .init_resource::<Events<b2EndContactEvent>>();
     }
+}
+
+fn world_exists(world: &World) -> bool {
+    world.contains_non_send::<b2World>()
 }
 
 fn step_physics(mut b2_world: NonSendMut<b2World>, settings: Res<b2WorldSettings>) {

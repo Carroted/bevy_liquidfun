@@ -119,7 +119,9 @@ impl<'a> b2World<'a> {
     }
 
     pub(crate) fn destroy_body_for_entity(&mut self, entity: Entity) {
-        let body_ptr = self.body_ptrs.remove(&entity).unwrap();
+        let Some(body_ptr) = self.body_ptrs.remove(&entity) else {
+            return;
+        };
         let fixtures = self.body_to_fixtures.remove(&entity);
         if let Some(fixtures) = fixtures {
             fixtures.iter().for_each(|f| {
@@ -172,17 +174,14 @@ impl<'a> b2World<'a> {
         self.joint_ptrs.insert(joint.0, joint.2);
     }
     pub(crate) fn destroy_fixture_for_entity(&mut self, entity: Entity) {
-        let fixture_ptr = self.fixture_ptrs.remove(&entity);
-
-        // The body (and the fixture along with it) might have already been destroyed on the C++
-        // side through DestroyBody
-        if let None = fixture_ptr {
+        let Some(fixture_ptr) = self.fixture_ptrs.remove(&entity) else {
             return;
-        }
+        };
 
-        let fixture_ptr = fixture_ptr.unwrap();
+        let Some(body_entity) = self.fixture_to_body.remove(&entity) else {
+            return;
+        };
 
-        let body_entity = self.fixture_to_body.remove(&entity).unwrap();
         self.body_to_fixtures
             .get_mut(&body_entity)
             .unwrap()

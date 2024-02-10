@@ -70,7 +70,10 @@ impl b2Body {
     }
 
     pub fn sync_with_world(&mut self, entity: Entity, world: &b2World) {
-        let body_ptr = world.get_body_ptr(entity).unwrap();
+        let Some(body_ptr) = world.get_body_ptr(entity) else {
+            return;
+        };
+
         self.position = to_Vec2(body_ptr.as_ref().GetPosition());
         self.angle = body_ptr.as_ref().GetAngle();
         self.linear_velocity = to_Vec2(body_ptr.as_ref().GetLinearVelocity());
@@ -80,7 +83,10 @@ impl b2Body {
     }
 
     pub fn sync_to_world(&self, entity: Entity, world: &mut b2World) {
-        let body_ptr = world.get_body_ptr_mut(entity).unwrap();
+        let Some(body_ptr) = world.get_body_ptr_mut(entity) else {
+            return;
+        };
+
         body_ptr
             .as_mut()
             .SetTransform(&to_b2Vec2(&self.position), self.angle);

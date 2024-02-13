@@ -122,6 +122,9 @@ pub struct b2BodyDef {
 pub struct b2BodyBundle {
     pub transform: TransformBundle,
     pub body: b2Body,
+    pub external_force: ExternalForce,
+    pub external_impulse: ExternalImpulse,
+    pub external_torque: ExternalTorque,
 }
 
 impl b2BodyBundle {
@@ -136,6 +139,9 @@ impl b2BodyBundle {
                 ..default()
             },
             body: b2Body::new(def),
+            external_force: ExternalForce::default(),
+            external_impulse: ExternalImpulse::default(),
+            external_torque: ExternalTorque::default(),
         }
     }
 }

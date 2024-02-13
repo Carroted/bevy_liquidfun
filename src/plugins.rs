@@ -7,7 +7,7 @@ use crate::collision::b2Shape;
 use crate::dynamics::{
     b2BeginContactEvent, b2Body, b2EndContactEvent, b2Fixture, b2Joint, b2ParticleBodyContact,
     b2ParticleContacts, b2PrismaticJoint, b2RevoluteJoint, b2World, b2WorldSettings, ExternalForce,
-    ExternalTorque, GravityScale, JointPtr,
+    ExternalImpulse, ExternalTorque, GravityScale, JointPtr,
 };
 use crate::internal::to_b2Vec2;
 use crate::particles::{b2ParticleGroup, b2ParticleSystem, b2ParticleSystemContacts};
@@ -35,6 +35,7 @@ impl Plugin for LiquidFunPlugin {
                 (
                     (
                         clear_forces,
+                        clear_impulses,
                         clear_torques,
                         clear_events::<b2BeginContactEvent>,
                         clear_events::<b2EndContactEvent>,
@@ -58,7 +59,12 @@ impl Plugin for LiquidFunPlugin {
                     )
                         .chain()
                         .in_set(PhysicsUpdateStep::SyncToPhysicsWorld),
-                    (apply_forces, apply_torques, apply_gravity_scale)
+                    (
+                        apply_forces,
+                        apply_impulses,
+                        apply_torques,
+                        apply_gravity_scale,
+                    )
                         .chain()
                         .in_set(PhysicsUpdateStep::ApplyForces),
                     step_physics.in_set(PhysicsUpdateStep::Step),
@@ -102,6 +108,12 @@ fn step_physics(mut b2_world: NonSendMut<b2World>, settings: Res<b2WorldSettings
 fn clear_forces(mut external_forces: Query<&mut ExternalForce>) {
     for mut force in external_forces.iter_mut() {
         force.clear()
+    }
+}
+
+fn clear_impulses(mut external_impulses: Query<&mut ExternalImpulse>) {
+    for mut impulse in external_impulses.iter_mut() {
+        impulse.clear()
     }
 }
 
@@ -307,6 +319,28 @@ fn apply_forces(
     }
 }
 
+fn apply_impulses(
+    mut b2_world: NonSendMut<b2World>,
+    external_impulses: Query<(Entity, &ExternalImpulse)>,
+) {
+    for (entity, external_impulse) in external_impulses.iter() {
+        let body_ptr = b2_world.get_body_ptr_mut(entity);
+        if let Some(body_ptr) = body_ptr {
+            body_ptr.as_mut().ApplyLinearImpulseToCenter(
+                &to_b2Vec2(&external_impulse.impulse()),
+                external_impulse.should_wake,
+            );
+            body_ptr
+                .as_mut()
+                .ApplyAngularImpulse(external_impulse.angular_impulse(), false);
+        } else {
+            warn!(
+                "Encountered ExternalImpulse component on an Entity without a matching b2Body: {:?}",
+                entity
+            );
+        }
+    }
+}
 fn apply_torques(
     mut b2_world: NonSendMut<b2World>,
     external_torques: Query<(Entity, &ExternalTorque)>,

@@ -200,6 +200,61 @@ impl ExternalForce {
 }
 
 #[derive(Component, Debug, Default)]
+pub struct ExternalImpulse {
+    impulse: Vec2,
+    pub should_wake: bool,
+    angular_impulse: f32,
+}
+
+impl ExternalImpulse {
+    pub const ZERO: Self = Self {
+        impulse: Vec2::ZERO,
+        should_wake: false,
+        angular_impulse: 0.,
+    };
+
+    pub fn new(impulse: Vec2) -> Self {
+        Self {
+            impulse,
+            ..default()
+        }
+    }
+
+    pub fn set_impulse(&mut self, impulse: Vec2) -> &mut Self {
+        self.impulse = impulse;
+        self
+    }
+
+    pub fn apply_impulse(&mut self, impulse: Vec2) -> &mut Self {
+        self.impulse += impulse;
+        self
+    }
+
+    pub fn apply_impulse_at_point(
+        &mut self,
+        impulse: Vec2,
+        point: Vec2,
+        center_of_mass: Vec2,
+    ) -> &mut Self {
+        self.impulse += impulse;
+        self.angular_impulse += (point - center_of_mass).perp_dot(impulse);
+        self
+    }
+
+    pub fn impulse(&self) -> Vec2 {
+        self.impulse
+    }
+
+    pub fn angular_impulse(&self) -> f32 {
+        self.angular_impulse
+    }
+
+    pub fn clear(&mut self) {
+        self.impulse = Vec2::ZERO;
+        self.angular_impulse = 0.;
+    }
+}
+#[derive(Component, Debug, Default)]
 pub struct ExternalTorque {
     pub torque: f32,
     pub should_wake: bool,

@@ -3,7 +3,7 @@ use std::pin::Pin;
 
 use autocxx::WithinBox;
 use bevy::math::Vec2;
-use bevy::prelude::{Component, Entity};
+use bevy::prelude::{Component, Entity, Resource};
 
 use libliquidfun_sys::box2d::ffi::{
     b2Contact as ffi_b2Contact, b2ParticleBodyContact as ffi_b2ParticleBodyContact, b2WorldManifold,
@@ -109,20 +109,60 @@ impl b2ParticleBodyContact {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Component, Debug)]
-pub struct b2ParticleContacts {
-    contacts: HashSet<i32>,
+#[derive(Resource, Debug, Default)]
+pub struct b2Contacts {
+    contacts: Vec<b2Contact>,
 }
 
-impl Default for b2ParticleContacts {
-    fn default() -> Self {
-        Self {
-            contacts: Default::default(),
-        }
+impl b2Contacts {
+    pub fn contacts(&self) -> &Vec<b2Contact> {
+        &self.contacts
+    }
+
+    pub(crate) fn contacts_mut(&mut self) -> &mut Vec<b2Contact> {
+        &mut self.contacts
     }
 }
 
-impl b2ParticleContacts {
+#[allow(non_camel_case_types)]
+#[derive(Component, Debug, Default)]
+pub struct b2FixturesInContact {
+    contacts: HashSet<Entity>,
+}
+
+impl b2FixturesInContact {
+    pub fn contacts(&self) -> &HashSet<Entity> {
+        &self.contacts
+    }
+
+    pub(crate) fn contacts_mut(&mut self) -> &mut HashSet<Entity> {
+        &mut self.contacts
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Component, Debug, Default)]
+pub struct b2BodiesInContact {
+    contacts: HashSet<Entity>,
+}
+
+impl b2BodiesInContact {
+    pub fn contacts(&self) -> &HashSet<Entity> {
+        &self.contacts
+    }
+
+    pub(crate) fn contacts_mut(&mut self) -> &mut HashSet<Entity> {
+        &mut self.contacts
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Component, Debug, Default)]
+pub struct b2ParticlesInContact {
+    contacts: HashSet<i32>,
+}
+
+impl b2ParticlesInContact {
     pub fn contacts(&self) -> &HashSet<i32> {
         &self.contacts
     }

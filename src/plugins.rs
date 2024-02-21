@@ -1,3 +1,5 @@
+use std::pin::Pin;
+
 use bevy::prelude::*;
 use bevy::transform::TransformSystem;
 
@@ -5,9 +7,10 @@ use libliquidfun_sys::box2d::ffi::int32;
 
 use crate::collision::b2Shape;
 use crate::dynamics::{
-    b2BeginContactEvent, b2Body, b2EndContactEvent, b2Fixture, b2Joint, b2ParticleBodyContact,
-    b2ParticleContacts, b2PrismaticJoint, b2RevoluteJoint, b2World, b2WorldSettings, ExternalForce,
-    ExternalImpulse, ExternalTorque, GravityScale, JointPtr,
+    b2BeginContactEvent, b2BodiesInContact, b2Body, b2Contact, b2Contacts, b2EndContactEvent,
+    b2Fixture, b2FixturesInContact, b2Joint, b2ParticleBodyContact, b2ParticlesInContact,
+    b2PrismaticJoint, b2RevoluteJoint, b2World, b2WorldSettings, ExternalForce, ExternalImpulse,
+    ExternalTorque, GravityScale, JointPtr,
 };
 use crate::internal::to_b2Vec2;
 use crate::particles::{b2ParticleGroup, b2ParticleSystem, b2ParticleSystemContacts};
@@ -30,6 +33,7 @@ impl Plugin for LiquidFunPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(LiquidFunSchedulePlugin)
             .insert_resource(self.settings.clone())
+            .init_resource::<b2Contacts>()
             .add_systems(
                 PhysicsSchedule,
                 (
@@ -73,9 +77,12 @@ impl Plugin for LiquidFunPlugin {
                         sync_particle_systems_from_world,
                         send_contact_events,
                         copy_particle_system_contacts,
-                        update_particle_body_contacts_components,
+                        update_particle_body_contacts_components
+                            .after(copy_particle_system_contacts),
+                        copy_contacts,
+                        update_bodies_in_contact_components.after(copy_contacts),
+                        update_fixtures_in_contact_components.after(copy_contacts),
                     )
-                        .chain()
                         .in_set(PhysicsUpdateStep::SyncFromPhysicsWorld),
                 )
                     .run_if(world_exists),
@@ -192,6 +199,7 @@ fn create_prismatic_joints(
         );
     }
 }
+
 fn create_particle_systems(
     mut commands: Commands,
     mut b2_world: NonSendMut<b2World>,
@@ -263,6 +271,7 @@ fn destroy_removed_fixtures(
         b2_world.destroy_fixture_for_entity(entity);
     }
 }
+
 fn sync_bodies_to_world(
     mut b2_world: NonSendMut<b2World>,
     bodies: Query<(Entity, &b2Body), Changed<b2Body>>,
@@ -341,6 +350,7 @@ fn apply_impulses(
         }
     }
 }
+
 fn apply_torques(
     mut b2_world: NonSendMut<b2World>,
     external_torques: Query<(Entity, &ExternalTorque)>,
@@ -376,6 +386,7 @@ fn apply_gravity_scale(
         }
     }
 }
+
 fn sync_bodies_from_world(b2_world: NonSend<b2World>, mut bodies: Query<(Entity, &mut b2Body)>) {
     for (entity, mut body) in bodies.iter_mut() {
         body.sync_with_world(entity, &b2_world);
@@ -418,6 +429,38 @@ fn send_contact_events(
     contact_listener.clear_contact_changes();
 }
 
+fn copy_contacts(mut b2_world: NonSendMut<b2World>, mut contacts: ResMut<b2Contacts>) {
+    let contacts = contacts.contacts_mut();
+    contacts.clear();
+
+    let world_ptr = b2_world.get_world_ptr();
+    let contact_count = i32::from(int32::from(world_ptr.as_ref().GetContactCount())) as usize;
+
+    if contact_count == 0 {
+        return;
+    }
+    let mut ffi_contact = unsafe {
+        let Some(ffi_contacts) = world_ptr.as_mut().GetContactList().as_mut() else {
+            return;
+        };
+
+        ffi_contacts
+    };
+
+    for _ in 0..contact_count {
+        let contact = b2Contact::from_ffi_contact(ffi_contact);
+        contacts.push(contact);
+
+        unsafe {
+            if let Some(next) = Pin::new_unchecked(ffi_contact).as_mut().GetNext().as_mut() {
+                ffi_contact = next;
+            } else {
+                break;
+            };
+        }
+    }
+}
+
 fn copy_particle_system_contacts(
     b2_world: NonSendMut<b2World>,
     mut particle_systems: Query<(Entity, &mut b2ParticleSystemContacts)>,
@@ -442,8 +485,48 @@ fn copy_particle_system_contacts(
     }
 }
 
+fn update_fixtures_in_contact_components(
+    mut fixtures_in_contact_components: Query<
+        (Entity, &mut b2FixturesInContact),
+        Or<(With<b2Body>, With<b2Fixture>)>,
+    >,
+    contacts: Res<b2Contacts>,
+) {
+    for (entity, mut fixtures_in_contact) in &mut fixtures_in_contact_components {
+        let fixtures = fixtures_in_contact.contacts_mut();
+        fixtures.clear();
+        for contact in contacts.contacts() {
+            if contact.fixture_a == entity || contact.body_a == entity {
+                fixtures.insert(contact.fixture_b);
+            } else if contact.fixture_b == entity || contact.body_b == entity {
+                fixtures.insert(contact.fixture_a);
+            }
+        }
+    }
+}
+
+fn update_bodies_in_contact_components(
+    mut bodies_in_contact_components: Query<
+        (Entity, &mut b2BodiesInContact),
+        Or<(With<b2Body>, With<b2Fixture>)>,
+    >,
+    contacts: Res<b2Contacts>,
+) {
+    for (entity, mut bodies_in_contact) in &mut bodies_in_contact_components {
+        let bodies = bodies_in_contact.contacts_mut();
+        bodies.clear();
+        for contact in contacts.contacts() {
+            if contact.fixture_a == entity || contact.body_a == entity {
+                bodies.insert(contact.body_b);
+            } else if contact.fixture_b == entity || contact.body_b == entity {
+                bodies.insert(contact.body_a);
+            }
+        }
+    }
+}
+
 fn update_particle_body_contacts_components(
-    mut particle_contact_components: Query<(Entity, &mut b2ParticleContacts), With<b2Body>>,
+    mut particle_contact_components: Query<(Entity, &mut b2ParticlesInContact), With<b2Body>>,
     particle_system_contacts: Query<&b2ParticleSystemContacts>,
 ) {
     for (_, mut particle_contact_component) in &mut particle_contact_components {
@@ -477,6 +560,7 @@ fn update_transforms(
         transform.rotation = Quat::from_rotation_z(body.angle);
     }
 }
+
 pub struct LiquidFunDebugDrawPlugin;
 
 impl Plugin for LiquidFunDebugDrawPlugin {

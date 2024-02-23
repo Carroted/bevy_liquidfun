@@ -32,7 +32,7 @@ impl Default for b2WorldSettings {
             time_step: 1. / 60.,
             velocity_iterations: 8,
             position_iterations: 3,
-            particle_iterations: 4,
+            particle_iterations: 1,
         }
     }
 }

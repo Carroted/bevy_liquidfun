@@ -63,6 +63,8 @@ fn run_liquidfun_schedule(world: &mut World) {
         *world.resource_mut::<Time>() = world.resource::<Time<PhysicsTime>>().as_generic();
 
         let real_delta = world.resource::<Time<Real>>().delta_seconds();
+        let max_frame_delta = world.resource::<b2WorldSettings>().max_frame_delta;
+        let real_delta = real_delta.min(max_frame_delta);
         let wanted_time_step = world.resource::<b2WorldSettings>().time_step;
         world.resource_scope(
             |world, mut physics_time_accumulator: Mut<PhysicsTimeAccumulator>| {

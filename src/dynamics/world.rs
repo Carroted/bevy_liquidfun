@@ -21,6 +21,7 @@ use crate::particles::{b2ParticleGroup, b2ParticleSystem};
 #[derive(Resource, Clone)]
 pub struct b2WorldSettings {
     pub time_step: f32,
+    pub max_frame_delta: f32,
     pub velocity_iterations: i32,
     pub position_iterations: i32,
     pub particle_iterations: i32,
@@ -30,6 +31,7 @@ impl Default for b2WorldSettings {
     fn default() -> Self {
         Self {
             time_step: 1. / 60.,
+            max_frame_delta: 1. / 30.,
             velocity_iterations: 8,
             position_iterations: 3,
             particle_iterations: 1,

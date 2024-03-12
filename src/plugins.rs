@@ -14,7 +14,7 @@ use crate::dynamics::{
 };
 use crate::internal::to_b2Vec2;
 use crate::particles::{b2ParticleGroup, b2ParticleSystem, b2ParticleSystemContacts};
-use crate::schedule::{LiquidFunSchedulePlugin, PhysicsUpdateStep};
+use crate::schedule::{LiquidFunSchedulePlugin, PhysicsTimeAccumulator, PhysicsUpdateStep};
 use crate::schedule::{PhysicsSchedule, PhysicsUpdate};
 use crate::utils::{DebugDrawFixtures, DebugDrawParticleSystem};
 
@@ -548,14 +548,14 @@ fn update_particle_body_contacts_components(
 
 fn update_transforms(
     mut bodies: Query<(&b2Body, &mut Transform)>,
-    // physics_time_accumulator: Res<PhysicsTimeAccumulator>,
+    physics_time_accumulator: Res<PhysicsTimeAccumulator>,
 ) {
-    // let extrapolation_time = physics_time_accumulator.0;
+    let extrapolation_time = physics_time_accumulator.0;
     for (body, mut transform) in bodies.iter_mut() {
-        // let extrapolated_position = body.position + body.linear_velocity * extrapolation_time;
-        // transform.translation = extrapolated_position.extend(0.);
-        // let extrapolated_rotation = body.angle + body.angular_velocity * extrapolation_time;
-        // transform.rotation = Quat::from_rotation_z(extrapolated_rotation);
+        let extrapolated_position = body.position + body.linear_velocity * extrapolation_time;
+        transform.translation = extrapolated_position.extend(0.);
+        let extrapolated_rotation = body.angle + body.angular_velocity * extrapolation_time;
+        transform.rotation = Quat::from_rotation_z(extrapolated_rotation);
         transform.translation = body.position.extend(0.);
         transform.rotation = Quat::from_rotation_z(body.angle);
     }

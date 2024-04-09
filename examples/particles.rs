@@ -145,7 +145,9 @@ fn setup_particles(mut commands: Commands) {
     let particle_group_def = b2ParticleGroupDef {
         flags: b2ParticleFlags::WaterParticle,
         shape,
+        ..default()
     };
+
     let particle_group = b2ParticleGroup::new(particle_system_entity, &particle_group_def);
     commands.spawn(particle_group);
 }

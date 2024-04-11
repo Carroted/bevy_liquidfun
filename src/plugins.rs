@@ -422,7 +422,7 @@ fn send_contact_events(
         }
 
         for contact in ended_contacts.values() {
-            end_contact_events.send(b2EndContactEvent(contact.clone()))
+            end_contact_events.send(b2EndContactEvent(contact.clone()));
         }
     }
 

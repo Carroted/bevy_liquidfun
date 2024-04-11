@@ -121,7 +121,7 @@ fn setup_ground(mut commands: Commands) {
 }
 
 fn check_create_body_keys(
-    key_input: Res<Input<KeyCode>>,
+    key_input: Res<ButtonInput<KeyCode>>,
     shape_collection: Res<ShapeCollection>,
     commands: Commands,
 ) {
@@ -169,7 +169,7 @@ fn create_body(shape: &b2Shape, mut commands: Commands) {
 }
 
 fn check_delete_body_key(
-    key_input: Res<Input<KeyCode>>,
+    key_input: Res<ButtonInput<KeyCode>>,
     bodies: Query<Entity, With<AllowDestroy>>,
     mut commands: Commands,
 ) {

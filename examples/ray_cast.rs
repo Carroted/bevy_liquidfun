@@ -157,7 +157,7 @@ fn setup_ground(mut commands: Commands) {
 }
 
 fn check_create_body_keys(
-    key_input: Res<Input<KeyCode>>,
+    key_input: Res<ButtonInput<KeyCode>>,
     shape_collection: Res<ShapeCollection>,
     commands: Commands,
 ) {
@@ -212,7 +212,7 @@ fn create_body(shape: &b2Shape, mut commands: Commands, filter_category: u16) {
 }
 
 fn check_delete_body_key(
-    key_input: Res<Input<KeyCode>>,
+    key_input: Res<ButtonInput<KeyCode>>,
     bodies: Query<Entity, With<AllowDestroy>>,
     mut commands: Commands,
 ) {
@@ -266,7 +266,7 @@ fn cast_ray(
     };
 }
 
-fn check_switch_ray_cast_mode_key(key_input: Res<Input<KeyCode>>, mut mode: ResMut<RayCastMode>) {
+fn check_switch_ray_cast_mode_key(key_input: Res<ButtonInput<KeyCode>>, mut mode: ResMut<RayCastMode>) {
     if key_input.just_pressed(KeyCode::KeyR) {
         *mode = match mode.as_ref() {
             RayCastMode::Closest => RayCastMode::Any,

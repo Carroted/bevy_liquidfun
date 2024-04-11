@@ -133,7 +133,7 @@ fn create_box(commands: &mut Commands) -> Entity {
     return box_entity;
 }
 
-fn check_keys(input: Res<Input<KeyCode>>, mut joints: Query<&mut b2PrismaticJoint>) {
+fn check_keys(input: Res<ButtonInput<KeyCode>>, mut joints: Query<&mut b2PrismaticJoint>) {
     if input.just_pressed(KeyCode::KeyL) {
         let mut joint = joints.get_single_mut().unwrap();
         joint.enable_limit = !joint.enable_limit;

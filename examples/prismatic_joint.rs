@@ -134,17 +134,17 @@ fn create_box(commands: &mut Commands) -> Entity {
 }
 
 fn check_keys(input: Res<Input<KeyCode>>, mut joints: Query<&mut b2PrismaticJoint>) {
-    if input.just_pressed(KeyCode::L) {
+    if input.just_pressed(KeyCode::KeyL) {
         let mut joint = joints.get_single_mut().unwrap();
         joint.enable_limit = !joint.enable_limit;
     }
 
-    if input.just_pressed(KeyCode::M) {
+    if input.just_pressed(KeyCode::KeyM) {
         let mut joint = joints.get_single_mut().unwrap();
         joint.enable_motor = !joint.enable_motor;
     }
 
-    if input.just_pressed(KeyCode::S) {
+    if input.just_pressed(KeyCode::KeyS) {
         let mut joint = joints.get_single_mut().unwrap();
         joint.motor_speed = -joint.motor_speed;
     }

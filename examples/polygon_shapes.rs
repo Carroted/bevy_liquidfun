@@ -126,15 +126,15 @@ fn check_create_body_keys(
     commands: Commands,
 ) {
     let mut shape_index = None;
-    if key_input.just_pressed(KeyCode::Key1) {
+    if key_input.just_pressed(KeyCode::Digit1) {
         shape_index = Some(0);
-    } else if key_input.just_pressed(KeyCode::Key2) {
+    } else if key_input.just_pressed(KeyCode::Digit2) {
         shape_index = Some(1);
-    } else if key_input.just_pressed(KeyCode::Key3) {
+    } else if key_input.just_pressed(KeyCode::Digit3) {
         shape_index = Some(2);
-    } else if key_input.just_pressed(KeyCode::Key4) {
+    } else if key_input.just_pressed(KeyCode::Digit4) {
         shape_index = Some(3);
-    } else if key_input.just_pressed(KeyCode::Key5) {
+    } else if key_input.just_pressed(KeyCode::Digit5) {
         shape_index = Some(4);
     }
 
@@ -173,7 +173,7 @@ fn check_delete_body_key(
     bodies: Query<Entity, With<AllowDestroy>>,
     mut commands: Commands,
 ) {
-    if key_input.just_pressed(KeyCode::D) {
+    if key_input.just_pressed(KeyCode::KeyD) {
         let body_count = bodies.iter().len();
         if body_count == 0 {
             return;

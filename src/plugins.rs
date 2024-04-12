@@ -466,17 +466,21 @@ fn copy_particle_system_contacts(
     mut particle_systems: Query<(Entity, &mut b2ParticleSystemContacts)>,
 ) {
     for (entity, mut particle_system_contacts) in &mut particle_systems {
+        let new_body_contacts = particle_system_contacts.body_contacts_mut();
+        new_body_contacts.clear();
+
         let particle_system_ptr = b2_world.get_particle_system_ptr(&entity).unwrap();
         let body_contacts = unsafe {
             let body_contacts = particle_system_ptr.as_ref().GetBodyContacts();
             let count = i32::from(int32::from(
                 particle_system_ptr.as_ref().GetBodyContactCount(),
             )) as usize;
+            if body_contacts.is_null() || count == 0 {
+                continue;
+            }
             std::slice::from_raw_parts(body_contacts, count)
         };
 
-        let new_body_contacts = particle_system_contacts.body_contacts_mut();
-        new_body_contacts.clear();
         new_body_contacts.extend(
             body_contacts
                 .iter()

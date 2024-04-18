@@ -1,5 +1,3 @@
-use std::pin::Pin;
-
 use bevy::prelude::{Component, Entity};
 use libliquidfun_sys::box2d::ffi;
 
@@ -61,9 +59,9 @@ pub enum b2JointType {
     _Area,
 }
 
-pub(crate) enum JointPtr<'a> {
-    Revolute(Pin<&'a mut ffi::b2RevoluteJoint>),
-    Prismatic(Pin<&'a mut ffi::b2PrismaticJoint>),
+pub(crate) enum JointPtr {
+    Revolute(*mut ffi::b2RevoluteJoint),
+    Prismatic(*mut ffi::b2PrismaticJoint),
     _Distance, // TODO
     _Pulley,
     _Mouse,

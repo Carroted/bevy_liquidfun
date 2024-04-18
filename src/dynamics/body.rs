@@ -70,7 +70,7 @@ impl b2Body {
     }
 
     pub fn sync_with_world(&mut self, entity: Entity, world: &b2World) {
-        let Some(body_ptr) = world.get_body_ptr(entity) else {
+        let Some(body_ptr) = world.body_ptr(entity) else {
             return;
         };
 
@@ -83,7 +83,7 @@ impl b2Body {
     }
 
     pub fn sync_to_world(&self, entity: Entity, world: &mut b2World) {
-        let Some(body_ptr) = world.get_body_ptr_mut(entity) else {
+        let Some(mut body_ptr) = world.body_ptr_mut(entity) else {
             return;
         };
 

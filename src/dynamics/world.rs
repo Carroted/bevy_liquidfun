@@ -40,13 +40,13 @@ impl Default for b2WorldSettings {
 }
 
 #[allow(non_camel_case_types)]
-pub struct b2World<'a> {
+pub struct b2World {
     ffi_world: Pin<Box<ffi::b2World>>,
 
-    body_ptrs: HashMap<Entity, Pin<&'a mut ffi::b2Body>>,
-    fixture_ptrs: HashMap<Entity, Pin<&'a mut ffi::b2Fixture>>,
-    joint_ptrs: HashMap<Entity, JointPtr<'a>>,
-    particle_system_ptrs: HashMap<Entity, Pin<&'a mut ffi::b2ParticleSystem>>,
+    body_ptrs: HashMap<Entity, *mut ffi::b2Body>,
+    fixture_ptrs: HashMap<Entity, *mut ffi::b2Fixture>,
+    joint_ptrs: HashMap<Entity, JointPtr>,
+    particle_system_ptrs: HashMap<Entity, *mut ffi::b2ParticleSystem>,
 
     body_to_fixtures: HashMap<Entity, HashSet<Entity>>,
     fixture_to_body: HashMap<Entity, Entity>,
@@ -58,9 +58,9 @@ pub struct b2World<'a> {
     pub gravity: Vec2,
 }
 
-impl<'a> b2World<'a> {}
+impl b2World {}
 
-impl<'a> b2World<'a> {
+impl b2World {
     pub fn new(gravity: Vec2) -> Self {
         let ffi_gravity = to_b2Vec2(&gravity);
         let mut ffi_world = ffi::b2World::new(&ffi_gravity).within_box();
@@ -95,15 +95,26 @@ impl<'a> b2World<'a> {
         &mut self.ffi_world
     }
 
-    pub(crate) fn get_body_ptr(&self, entity: Entity) -> Option<&Pin<&'a mut ffi::b2Body>> {
-        self.body_ptrs.get(&entity)
+    pub(crate) fn body_ptr<'body>(&self, entity: Entity) -> Option<Pin<&'body ffi::b2Body>> {
+        if let Some(&body_ptr) = self.body_ptrs.get(&entity) {
+            unsafe {
+                let body_ref = &*body_ptr;
+                Some(Pin::new_unchecked(body_ref))
+            }
+        } else {
+            None
+        }
     }
 
-    pub(crate) fn get_body_ptr_mut(
-        &mut self,
-        entity: Entity,
-    ) -> Option<&mut Pin<&'a mut ffi::b2Body>> {
-        self.body_ptrs.get_mut(&entity)
+    pub(crate) fn body_ptr_mut<'body>(&mut self, entity: Entity) -> Option<Pin<&'body mut ffi::b2Body>> {
+        if let Some(&body_ptr) = self.body_ptrs.get(&entity) {
+            unsafe {
+                let body_ref = &mut *body_ptr;
+                Some(Pin::new_unchecked(body_ref))
+            }
+        } else {
+            None
+        }
     }
 
     pub(crate) fn create_body(&mut self, entity: Entity, body: &mut b2Body) {
@@ -115,7 +126,6 @@ impl<'a> b2World<'a> {
 
         unsafe {
             let ffi_body = self.ffi_world.as_mut().CreateBody(&*b2body_def);
-            let ffi_body = Pin::new_unchecked(ffi_body.as_mut().unwrap());
             self.body_ptrs.insert(entity, ffi_body);
         }
     }
@@ -133,7 +143,6 @@ impl<'a> b2World<'a> {
         }
 
         unsafe {
-            let body_ptr = Pin::into_inner_unchecked(body_ptr);
             self.ffi_world.as_mut().DestroyBody(body_ptr);
         }
     }
@@ -146,7 +155,7 @@ impl<'a> b2World<'a> {
         let (fixture_entity, fixture_component) = fixture;
         let (body_entity, body_component) = body;
 
-        let mut body_ptr = self.body_ptrs.get_mut(&body_entity).unwrap().as_mut();
+        let mut body_ptr = self.body_ptr_mut(body_entity).unwrap();
         let mut b2fixture_def = fixture_component.def().to_ffi();
         let fixture_entity_ptr = fixture_entity.to_bits() as usize;
         b2fixture_def.as_mut().userData.pointer = fixture_entity_ptr;
@@ -157,7 +166,6 @@ impl<'a> b2World<'a> {
                 .CreateFixture(&*b2fixture_def)
                 .as_mut()
                 .unwrap();
-            let ffi_fixture = Pin::new_unchecked(ffi_fixture);
             self.fixture_ptrs.insert(fixture_entity, ffi_fixture);
         }
 
@@ -169,7 +177,7 @@ impl<'a> b2World<'a> {
 
     pub(crate) fn register_joint(
         &mut self,
-        joint: (Entity, &b2Joint, JointPtr<'a>),
+        joint: (Entity, &b2Joint, JointPtr),
         _body_a: (Entity, &mut b2Body), // TODO
         _body_b: (Entity, &mut b2Body), // TODO
     ) {
@@ -189,10 +197,9 @@ impl<'a> b2World<'a> {
             .unwrap()
             .remove(&entity);
 
-        let body_ptr = self.body_ptrs.get_mut(&body_entity).unwrap();
+        let mut body_ptr = self.body_ptr_mut(body_entity).unwrap();
 
         unsafe {
-            let fixture_ptr = fixture_ptr.get_unchecked_mut();
             body_ptr.as_mut().DestroyFixture(fixture_ptr);
         }
     }
@@ -205,8 +212,8 @@ impl<'a> b2World<'a> {
         let definition = particle_system.get_definition().to_ffi();
         let definition: *const ffi::b2ParticleSystemDef = &definition;
         unsafe {
-            let ffi_particle_system = self.ffi_world.as_mut().CreateParticleSystem(definition);
-            let mut ffi_particle_system = Pin::new_unchecked(ffi_particle_system.as_mut().unwrap());
+            let ffi_particle_system_ptr = self.ffi_world.as_mut().CreateParticleSystem(definition);
+            let mut ffi_particle_system = Pin::new_unchecked(ffi_particle_system_ptr.as_mut().unwrap());
             let positions = particle_system.get_positions_mut();
             let capacity = i32::try_from(positions.capacity()).unwrap();
             let capacity: int32 = int32::from(capacity);
@@ -214,7 +221,7 @@ impl<'a> b2World<'a> {
                 .as_mut()
                 .SetPositionBuffer(positions.as_mut_ptr() as *mut ffi::b2Vec2, capacity);
             self.particle_system_ptrs
-                .insert(entity, ffi_particle_system);
+                .insert(entity, ffi_particle_system_ptr);
         }
     }
 
@@ -224,9 +231,8 @@ impl<'a> b2World<'a> {
         _entity: Entity,
         particle_group: &b2ParticleGroup,
     ) {
-        let particle_system_ptr = self
-            .particle_system_ptrs
-            .get_mut(&particle_system_entity)
+        let mut particle_system_ptr = self
+            .particle_system_ptr_mut(particle_system_entity)
             .unwrap();
         let def = particle_group.get_definition().to_ffi();
         particle_system_ptr.as_mut().CreateParticleGroup(def);
@@ -254,21 +260,29 @@ impl<'a> b2World<'a> {
         self.body_to_fixtures.get(body_entity)
     }
 
-    pub(crate) fn get_particle_system_ptr(
-        &self,
-        particle_system_entity: &Entity,
-    ) -> Option<&Pin<&'a mut ffi::b2ParticleSystem>> {
-        self.particle_system_ptrs.get(particle_system_entity)
+    pub(crate) fn particle_system_ptr<'p>(&self, entity: Entity) -> Option<Pin<&'p ffi::b2ParticleSystem>> {
+        if let Some(&ptr) = self.particle_system_ptrs.get(&entity) {
+            unsafe {
+                let ps_ref = &*ptr;
+                Some(Pin::new_unchecked(ps_ref))
+            }
+        } else {
+            None
+        }
     }
 
-    pub(crate) fn get_particle_system_ptr_mut(
-        &mut self,
-        particle_system_entity: &Entity,
-    ) -> Option<&mut Pin<&'a mut ffi::b2ParticleSystem>> {
-        self.particle_system_ptrs.get_mut(particle_system_entity)
+    pub(crate) fn particle_system_ptr_mut<'p>(&mut self, entity: Entity) -> Option<Pin<&'p mut ffi::b2ParticleSystem>> {
+        if let Some(&ptr) = self.particle_system_ptrs.get(&entity) {
+            unsafe {
+                let ps_ref = &mut *ptr;
+                Some(Pin::new_unchecked(ps_ref))
+            }
+        } else {
+            None
+        }
     }
 
-    pub(crate) fn get_joint_ptr(&mut self, joint_entity: &Entity) -> Option<&mut JointPtr<'a>> {
+    pub(crate) fn joint_ptr_mut(&mut self, joint_entity: &Entity) -> Option<&mut JointPtr> {
         self.joint_ptrs.get_mut(joint_entity)
     }
 

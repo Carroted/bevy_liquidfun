@@ -55,17 +55,17 @@ impl b2PrismaticJoint {
         }
     }
 
-    pub(crate) fn create_ffi_joint<'a>(
+    pub(crate) fn create_ffi_joint(
         &self,
         b2_world: &mut b2World,
         body_a: Entity,
         body_b: Entity,
         collide_connected: bool,
-    ) -> JointPtr<'a> {
+    ) -> JointPtr {
         unsafe {
-            let body_a = b2_world.get_body_ptr_mut(body_a).unwrap().as_mut();
+            let body_a = b2_world.body_ptr_mut(body_a).unwrap();
             let body_a = body_a.get_unchecked_mut() as *mut ffi::b2Body;
-            let body_b = b2_world.get_body_ptr_mut(body_b).unwrap().as_mut();
+            let body_b = b2_world.body_ptr_mut(body_b).unwrap();
             let body_b = body_b.get_unchecked_mut() as *mut ffi::b2Body;
             let ffi_world = b2_world.get_world_ptr().as_mut();
             let ffi_joint = ffi::CreatePrismaticJoint(
@@ -84,12 +84,12 @@ impl b2PrismaticJoint {
                 self.max_motor_force,
                 self.motor_speed,
             );
-            let ffi_joint = Pin::new_unchecked(ffi_joint.as_mut().unwrap());
             JointPtr::Prismatic(ffi_joint)
         }
     }
 
-    pub(crate) fn sync_to_world(&self, mut joint_ptr: Pin<&mut ffi::b2PrismaticJoint>) {
+    pub(crate) fn sync_to_world(&self, joint_ptr: *mut ffi::b2PrismaticJoint) {
+        let mut joint_ptr = unsafe { Pin::new_unchecked(joint_ptr.as_mut().unwrap())};
         joint_ptr.as_mut().EnableLimit(self.enable_limit);
         joint_ptr
             .as_mut()

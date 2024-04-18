@@ -231,7 +231,7 @@ fn create_queued_particles(
     mut query: Query<(Entity, &mut b2ParticleSystem)>,
 ) {
     for (entity, mut particle_system) in &mut query {
-        let particle_system_ptr = b2_world.get_particle_system_ptr_mut(&entity).unwrap();
+        let mut particle_system_ptr = b2_world.particle_system_ptr_mut(entity).unwrap();
         particle_system.process_creation_queue(particle_system_ptr.as_mut());
     }
 }
@@ -258,7 +258,7 @@ fn destroy_queued_particles(
     mut query: Query<(Entity, &mut b2ParticleSystem)>,
 ) {
     for (entity, mut particle_system) in &mut query {
-        let particle_system_ptr = b2_world.get_particle_system_ptr_mut(&entity).unwrap();
+        let mut particle_system_ptr = b2_world.particle_system_ptr_mut(entity).unwrap();
         particle_system.process_destruction_queue(particle_system_ptr.as_mut());
     }
 }
@@ -286,9 +286,9 @@ fn sync_revolute_joints_to_world(
     joints: Query<(Entity, &b2RevoluteJoint), Changed<b2RevoluteJoint>>,
 ) {
     for (entity, joint) in joints.iter() {
-        let joint_ptr = b2_world.get_joint_ptr(&entity).unwrap();
+        let joint_ptr = b2_world.joint_ptr_mut(&entity).unwrap();
         if let JointPtr::Revolute(joint_ptr) = joint_ptr {
-            joint.sync_to_world(joint_ptr.as_mut());
+            joint.sync_to_world(*joint_ptr);
         }
     }
 }
@@ -298,9 +298,9 @@ fn sync_prismatic_joints_to_world(
     joints: Query<(Entity, &b2PrismaticJoint), Changed<b2PrismaticJoint>>,
 ) {
     for (entity, joint) in joints.iter() {
-        let joint_ptr = b2_world.get_joint_ptr(&entity).unwrap();
+        let joint_ptr = b2_world.joint_ptr_mut(&entity).unwrap();
         if let JointPtr::Prismatic(joint_ptr) = joint_ptr {
-            joint.sync_to_world(joint_ptr.as_mut());
+            joint.sync_to_world(*joint_ptr);
         }
     }
 }
@@ -310,8 +310,8 @@ fn apply_forces(
     external_forces: Query<(Entity, &ExternalForce)>,
 ) {
     for (entity, external_force) in external_forces.iter() {
-        let body_ptr = b2_world.get_body_ptr_mut(entity);
-        if let Some(body_ptr) = body_ptr {
+        let body_ptr = b2_world.body_ptr_mut(entity);
+        if let Some(mut body_ptr) = body_ptr {
             body_ptr.as_mut().ApplyForceToCenter(
                 &to_b2Vec2(&external_force.force()),
                 external_force.should_wake,
@@ -333,8 +333,8 @@ fn apply_impulses(
     external_impulses: Query<(Entity, &ExternalImpulse)>,
 ) {
     for (entity, external_impulse) in external_impulses.iter() {
-        let body_ptr = b2_world.get_body_ptr_mut(entity);
-        if let Some(body_ptr) = body_ptr {
+        let body_ptr = b2_world.body_ptr_mut(entity);
+        if let Some(mut body_ptr) = body_ptr {
             body_ptr.as_mut().ApplyLinearImpulseToCenter(
                 &to_b2Vec2(&external_impulse.impulse()),
                 external_impulse.should_wake,
@@ -356,8 +356,8 @@ fn apply_torques(
     external_torques: Query<(Entity, &ExternalTorque)>,
 ) {
     for (entity, external_torque) in external_torques.iter() {
-        let body_ptr = b2_world.get_body_ptr_mut(entity);
-        if let Some(body_ptr) = body_ptr {
+        let body_ptr = b2_world.body_ptr_mut(entity);
+        if let Some(mut body_ptr) = body_ptr {
             body_ptr
                 .as_mut()
                 .ApplyTorque(external_torque.torque, external_torque.should_wake);
@@ -375,8 +375,8 @@ fn apply_gravity_scale(
     gravity_scales: Query<(Entity, &GravityScale)>,
 ) {
     for (entity, gravity_scale) in gravity_scales.iter() {
-        let body_ptr = b2_world.get_body_ptr_mut(entity);
-        if let Some(body_ptr) = body_ptr {
+        let body_ptr = b2_world.body_ptr_mut(entity);
+        if let Some(mut body_ptr) = body_ptr {
             body_ptr.as_mut().SetGravityScale(gravity_scale.0);
         } else {
             warn!(
@@ -469,7 +469,7 @@ fn copy_particle_system_contacts(
         let new_body_contacts = particle_system_contacts.body_contacts_mut();
         new_body_contacts.clear();
 
-        let particle_system_ptr = b2_world.get_particle_system_ptr(&entity).unwrap();
+        let particle_system_ptr = b2_world.particle_system_ptr(entity).unwrap();
         let body_contacts = unsafe {
             let body_contacts = particle_system_ptr.as_ref().GetBodyContacts();
             let count = i32::from(int32::from(

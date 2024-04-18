@@ -4,7 +4,7 @@ use bevy::utils::hashbrown::HashSet;
 use libliquidfun_sys::box2d::ffi;
 use libliquidfun_sys::box2d::ffi::b2BodyType::{b2_dynamicBody, b2_kinematicBody, b2_staticBody};
 
-use crate::dynamics::b2World;
+use crate::dynamics::b2WorldImpl;
 use crate::internal::{to_Vec2, to_b2Vec2};
 
 #[allow(non_camel_case_types)]
@@ -69,7 +69,7 @@ impl b2Body {
         }
     }
 
-    pub fn sync_with_world(&mut self, entity: Entity, world: &b2World) {
+    pub fn sync_with_world(&mut self, entity: Entity, world: &b2WorldImpl) {
         let Some(body_ptr) = world.body_ptr(entity) else {
             return;
         };
@@ -82,7 +82,7 @@ impl b2Body {
         self.awake = body_ptr.as_ref().IsAwake();
     }
 
-    pub fn sync_to_world(&self, entity: Entity, world: &mut b2World) {
+    pub fn sync_to_world(&self, entity: Entity, world: &mut b2WorldImpl) {
         let Some(mut body_ptr) = world.body_ptr_mut(entity) else {
             return;
         };

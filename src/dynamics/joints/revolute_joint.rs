@@ -5,7 +5,7 @@ use bevy::math::Vec2;
 use bevy::prelude::{Component, Entity, World};
 use libliquidfun_sys::box2d::ffi;
 
-use crate::dynamics::{b2Joint, b2JointType, b2World, JointPtr};
+use crate::dynamics::{b2Joint, b2JointType, b2WorldImpl, JointPtr};
 use crate::internal::to_b2Vec2;
 
 #[allow(non_camel_case_types)]
@@ -57,7 +57,7 @@ impl b2RevoluteJoint {
 
     pub(crate) fn create_ffi_joint<'a>(
         &self,
-        b2_world: &mut b2World,
+        b2_world: &mut b2WorldImpl,
         body_a: Entity,
         body_b: Entity,
         collide_connected: bool,

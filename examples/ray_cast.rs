@@ -8,15 +8,14 @@ use bevy::input::prelude::*;
 use bevy::prelude::*;
 use rand::prelude::*;
 
-use bevy_liquidfun::dynamics::{
-    b2BodyBundle, b2CategoryFilter, b2Filter, b2Fixture, b2FixtureDef, b2RayCastAll, b2RayCastAny,
-    b2RayCastClosest,
-};
-use bevy_liquidfun::plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin};
-use bevy_liquidfun::utils::DebugDrawFixtures;
 use bevy_liquidfun::{
     collision::b2Shape,
-    dynamics::{b2BodyDef, b2BodyType::Dynamic, b2World},
+    dynamics::{
+        b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2CategoryFilter, b2Filter, b2Fixture,
+        b2FixtureDef, b2RayCastAll, b2RayCastAny, b2RayCastClosest, b2World,
+    },
+    plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
+    utils::DebugDrawFixtures,
 };
 
 #[derive(Resource)]
@@ -70,7 +69,7 @@ fn main() {
         .add_systems(Startup, (setup_camera, setup_instructions))
         .add_systems(
             Startup,
-            (setup_physics_world, setup_ground.after(setup_physics_world)),
+            (setup_physics_world, setup_ground).chain(),
         )
         .add_systems(
             Update,
@@ -134,10 +133,10 @@ fn update_instructions(mode: Res<RayCastMode>, mut text: Query<&mut Text>) {
     }
 }
 
-fn setup_physics_world(world: &mut World) {
+fn setup_physics_world(mut commands: Commands) {
     let gravity = Vec2::ZERO;
     let b2_world = b2World::new(gravity);
-    world.insert_non_send_resource(b2_world);
+    commands.insert_resource(b2_world);
 }
 
 fn setup_ground(mut commands: Commands) {
@@ -231,7 +230,7 @@ fn check_delete_body_key(
 fn cast_ray(
     mut gizmos: Gizmos,
     time: Res<Time>,
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     mode: Res<RayCastMode>,
 ) {
     let ray_start = Vec2::new(0., 10.);
@@ -266,7 +265,10 @@ fn cast_ray(
     };
 }
 
-fn check_switch_ray_cast_mode_key(key_input: Res<ButtonInput<KeyCode>>, mut mode: ResMut<RayCastMode>) {
+fn check_switch_ray_cast_mode_key(
+    key_input: Res<ButtonInput<KeyCode>>,
+    mut mode: ResMut<RayCastMode>,
+) {
     if key_input.just_pressed(KeyCode::KeyR) {
         *mode = match mode.as_ref() {
             RayCastMode::Closest => RayCastMode::Any,

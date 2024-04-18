@@ -1,3 +1,5 @@
+use std::borrow::BorrowMut;
+use std::ops::Deref;
 use std::pin::Pin;
 
 use bevy::prelude::*;
@@ -6,13 +8,9 @@ use bevy::transform::TransformSystem;
 use libliquidfun_sys::box2d::ffi::int32;
 
 use crate::collision::b2Shape;
-use crate::dynamics::{
-    b2BeginContactEvent, b2BodiesInContact, b2Body, b2Contact, b2Contacts, b2EndContactEvent,
-    b2Fixture, b2FixturesInContact, b2Joint, b2ParticleBodyContact, b2ParticlesInContact,
-    b2PrismaticJoint, b2RevoluteJoint, b2World, b2WorldSettings, ExternalForce, ExternalImpulse,
-    ExternalTorque, GravityScale, JointPtr,
-};
-use crate::internal::to_b2Vec2;
+use crate::{dynamics::{
+    b2BeginContactEvent, b2BodiesInContact, b2Body, b2Contact, b2Contacts, b2EndContactEvent, b2Fixture, b2FixturesInContact, b2Joint, b2ParticleBodyContact, b2ParticlesInContact, b2PrismaticJoint, b2RevoluteJoint, b2World, b2WorldSettings, ExternalForce, ExternalImpulse, ExternalTorque, GravityScale, JointPtr
+}, internal::to_b2Vec2};
 use crate::particles::{b2ParticleGroup, b2ParticleSystem, b2ParticleSystemContacts};
 use crate::schedule::{LiquidFunSchedulePlugin, PhysicsTimeAccumulator, PhysicsUpdateStep};
 use crate::schedule::{PhysicsSchedule, PhysicsUpdate};
@@ -85,26 +83,22 @@ impl Plugin for LiquidFunPlugin {
                     )
                         .in_set(PhysicsUpdateStep::SyncFromPhysicsWorld),
                 )
-                    .run_if(world_exists),
+                    .run_if(resource_exists::<b2World>),
             )
             .add_systems(
                 Update,
                 update_transforms
                     .after(PhysicsUpdate)
                     .before(TransformSystem::TransformPropagate)
-                    .run_if(world_exists),
+                    .run_if(resource_exists::<b2World>),
             )
             .init_resource::<Events<b2BeginContactEvent>>()
             .init_resource::<Events<b2EndContactEvent>>();
     }
 }
 
-fn world_exists(world: &World) -> bool {
-    world.contains_non_send::<b2World>()
-}
-
-fn step_physics(mut b2_world: NonSendMut<b2World>, settings: Res<b2WorldSettings>) {
-    b2_world.step(
+fn step_physics(mut b2_world: ResMut<b2World>, settings: Res<b2WorldSettings>) {
+    b2_world.inner().step(
         settings.time_step,
         settings.velocity_iterations,
         settings.position_iterations,
@@ -135,27 +129,27 @@ fn clear_events<T: 'static + Send + Sync + Event>(mut events: ResMut<Events<T>>)
 }
 
 fn create_bodies(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     mut added: Query<(Entity, &mut b2Body), Added<b2Body>>,
 ) {
     for (entity, mut body) in added.iter_mut() {
-        b2_world.create_body(entity, &mut body);
+        b2_world.inner().create_body(entity, &mut body);
     }
 }
 
 fn create_fixtures(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     mut added: Query<(Entity, &mut b2Fixture), Added<b2Fixture>>,
     mut bodies: Query<(Entity, &mut b2Body)>,
 ) {
     for (fixture_entity, mut fixture) in added.iter_mut() {
         let (body_entity, mut body) = bodies.get_mut(fixture.body()).unwrap();
-        b2_world.create_fixture((fixture_entity, &mut fixture), (body_entity, &mut body));
+        b2_world.inner().create_fixture((fixture_entity, &mut fixture), (body_entity, &mut body));
     }
 }
 
 fn create_revolute_joints(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     mut added: Query<(Entity, &b2Joint, &b2RevoluteJoint), Added<b2RevoluteJoint>>,
     mut bodies: Query<(Entity, &mut b2Body)>,
 ) {
@@ -163,13 +157,14 @@ fn create_revolute_joints(
         let [mut body_a, mut body_b] = bodies
             .get_many_mut([*joint.body_a(), *joint.body_b()])
             .unwrap();
+        let mut b2_world_impl = b2_world.inner();
         let joint_ptr = revolute_joint.create_ffi_joint(
-            &mut b2_world,
+            b2_world_impl.borrow_mut(),
             body_a.0,
             body_b.0,
             joint.collide_connected(),
         );
-        b2_world.register_joint(
+        b2_world_impl.register_joint(
             (joint_entity, &joint, joint_ptr),
             (body_a.0, &mut body_a.1),
             (body_b.0, &mut body_b.1),
@@ -178,7 +173,7 @@ fn create_revolute_joints(
 }
 
 fn create_prismatic_joints(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     mut added: Query<(Entity, &b2Joint, &b2PrismaticJoint), Added<b2PrismaticJoint>>,
     mut bodies: Query<(Entity, &mut b2Body)>,
 ) {
@@ -186,13 +181,14 @@ fn create_prismatic_joints(
         let [mut body_a, mut body_b] = bodies
             .get_many_mut([*joint.body_a(), *joint.body_b()])
             .unwrap();
+        let mut b2_world_impl = b2_world.inner();
         let joint_ptr = prismatic_joint.create_ffi_joint(
-            &mut b2_world,
+            b2_world_impl.borrow_mut(),
             body_a.0,
             body_b.0,
             joint.collide_connected(),
         );
-        b2_world.register_joint(
+        b2_world_impl.register_joint(
             (joint_entity, &joint, joint_ptr),
             (body_a.0, &mut body_a.1),
             (body_b.0, &mut body_b.1),
@@ -202,11 +198,11 @@ fn create_prismatic_joints(
 
 fn create_particle_systems(
     mut commands: Commands,
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     mut added: Query<(Entity, &mut b2ParticleSystem), Added<b2ParticleSystem>>,
 ) {
     for (entity, mut particle_system) in added.iter_mut() {
-        b2_world.create_particle_system(entity, &mut particle_system);
+        b2_world.inner().create_particle_system(entity, &mut particle_system);
         commands
             .entity(entity)
             .insert(b2ParticleSystemContacts::default());
@@ -214,11 +210,11 @@ fn create_particle_systems(
 }
 
 fn create_particle_groups(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     mut added_groups: Query<(Entity, &mut b2ParticleGroup), Added<b2ParticleGroup>>,
 ) {
     for (entity, mut particle_group) in added_groups.iter_mut() {
-        b2_world.create_particle_group(
+        b2_world.inner().create_particle_group(
             particle_group.get_particle_system_entity(),
             entity,
             &mut particle_group,
@@ -227,66 +223,69 @@ fn create_particle_groups(
 }
 
 fn create_queued_particles(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     mut query: Query<(Entity, &mut b2ParticleSystem)>,
 ) {
     for (entity, mut particle_system) in &mut query {
-        let mut particle_system_ptr = b2_world.particle_system_ptr_mut(entity).unwrap();
+        let mut particle_system_ptr = b2_world.inner().particle_system_ptr_mut(entity).unwrap();
         particle_system.process_creation_queue(particle_system_ptr.as_mut());
     }
 }
 
 fn destroy_removed_bodies(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     mut removed: RemovedComponents<b2Body>,
     mut commands: Commands,
 ) {
+    let mut b2_world_impl = b2_world.inner();
     for entity in removed.read() {
-        let fixture_entities = b2_world.get_fixtures_attached_to_entity(&entity);
+        let fixture_entities = b2_world_impl.get_fixtures_attached_to_entity(&entity);
         if let Some(fixture_entities) = fixture_entities {
             fixture_entities.iter().for_each(|fixture_entity| {
                 commands.entity(*fixture_entity).despawn_recursive();
             });
         }
 
-        b2_world.destroy_body_for_entity(entity);
+        b2_world_impl.destroy_body_for_entity(entity);
     }
 }
 
 fn destroy_queued_particles(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     mut query: Query<(Entity, &mut b2ParticleSystem)>,
 ) {
     for (entity, mut particle_system) in &mut query {
-        let mut particle_system_ptr = b2_world.particle_system_ptr_mut(entity).unwrap();
+        let mut particle_system_ptr = b2_world.inner().particle_system_ptr_mut(entity).unwrap();
         particle_system.process_destruction_queue(particle_system_ptr.as_mut());
     }
 }
 
 fn destroy_removed_fixtures(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     mut removed: RemovedComponents<b2Fixture>,
 ) {
     for entity in removed.read() {
-        b2_world.destroy_fixture_for_entity(entity);
+        b2_world.inner().destroy_fixture_for_entity(entity);
     }
 }
 
 fn sync_bodies_to_world(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     bodies: Query<(Entity, &b2Body), Changed<b2Body>>,
 ) {
+    let mut b2_world_impl = b2_world.inner();
     for (entity, body) in bodies.iter() {
-        body.sync_to_world(entity, &mut b2_world);
+        body.sync_to_world(entity, b2_world_impl.borrow_mut());
     }
 }
 
 fn sync_revolute_joints_to_world(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     joints: Query<(Entity, &b2RevoluteJoint), Changed<b2RevoluteJoint>>,
 ) {
+    let mut b2_world_impl = b2_world.inner();
     for (entity, joint) in joints.iter() {
-        let joint_ptr = b2_world.joint_ptr_mut(&entity).unwrap();
+        let joint_ptr = b2_world_impl.joint_ptr_mut(&entity).unwrap();
         if let JointPtr::Revolute(joint_ptr) = joint_ptr {
             joint.sync_to_world(*joint_ptr);
         }
@@ -294,11 +293,12 @@ fn sync_revolute_joints_to_world(
 }
 
 fn sync_prismatic_joints_to_world(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     joints: Query<(Entity, &b2PrismaticJoint), Changed<b2PrismaticJoint>>,
 ) {
+    let mut b2_world_impl = b2_world.inner();
     for (entity, joint) in joints.iter() {
-        let joint_ptr = b2_world.joint_ptr_mut(&entity).unwrap();
+        let joint_ptr = b2_world_impl.joint_ptr_mut(&entity).unwrap();
         if let JointPtr::Prismatic(joint_ptr) = joint_ptr {
             joint.sync_to_world(*joint_ptr);
         }
@@ -306,11 +306,12 @@ fn sync_prismatic_joints_to_world(
 }
 
 fn apply_forces(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     external_forces: Query<(Entity, &ExternalForce)>,
 ) {
+    let mut b2_world_impl = b2_world.inner();
     for (entity, external_force) in external_forces.iter() {
-        let body_ptr = b2_world.body_ptr_mut(entity);
+        let body_ptr = b2_world_impl.body_ptr_mut(entity);
         if let Some(mut body_ptr) = body_ptr {
             body_ptr.as_mut().ApplyForceToCenter(
                 &to_b2Vec2(&external_force.force()),
@@ -329,11 +330,12 @@ fn apply_forces(
 }
 
 fn apply_impulses(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     external_impulses: Query<(Entity, &ExternalImpulse)>,
 ) {
+    let mut b2_world_impl = b2_world.inner();
     for (entity, external_impulse) in external_impulses.iter() {
-        let body_ptr = b2_world.body_ptr_mut(entity);
+        let body_ptr = b2_world_impl.body_ptr_mut(entity);
         if let Some(mut body_ptr) = body_ptr {
             body_ptr.as_mut().ApplyLinearImpulseToCenter(
                 &to_b2Vec2(&external_impulse.impulse()),
@@ -352,11 +354,12 @@ fn apply_impulses(
 }
 
 fn apply_torques(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     external_torques: Query<(Entity, &ExternalTorque)>,
 ) {
+    let mut b2_world_impl = b2_world.inner();
     for (entity, external_torque) in external_torques.iter() {
-        let body_ptr = b2_world.body_ptr_mut(entity);
+        let body_ptr = b2_world_impl.body_ptr_mut(entity);
         if let Some(mut body_ptr) = body_ptr {
             body_ptr
                 .as_mut()
@@ -371,11 +374,12 @@ fn apply_torques(
 }
 
 fn apply_gravity_scale(
-    mut b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     gravity_scales: Query<(Entity, &GravityScale)>,
 ) {
+    let mut b2_world_impl = b2_world.inner();
     for (entity, gravity_scale) in gravity_scales.iter() {
-        let body_ptr = b2_world.body_ptr_mut(entity);
+        let body_ptr = b2_world_impl.body_ptr_mut(entity);
         if let Some(mut body_ptr) = body_ptr {
             body_ptr.as_mut().SetGravityScale(gravity_scale.0);
         } else {
@@ -387,30 +391,33 @@ fn apply_gravity_scale(
     }
 }
 
-fn sync_bodies_from_world(b2_world: NonSend<b2World>, mut bodies: Query<(Entity, &mut b2Body)>) {
+fn sync_bodies_from_world(mut b2_world: ResMut<b2World>, mut bodies: Query<(Entity, &mut b2Body)>) {
+    let b2_world_impl = b2_world.inner();
     for (entity, mut body) in bodies.iter_mut() {
-        body.sync_with_world(entity, &b2_world);
+        body.sync_with_world(entity, &b2_world_impl);
     }
 }
 
 fn sync_particle_systems_from_world(
-    b2_world: NonSend<b2World>,
+    mut b2_world: ResMut<b2World>,
     mut particle_systems: Query<(Entity, &mut b2ParticleSystem)>,
 ) {
+    let b2_world_impl = b2_world.inner();
     for (entity, mut particle_system) in particle_systems.iter_mut() {
-        particle_system.sync_with_world(entity, &b2_world);
+        particle_system.sync_with_world(entity, &b2_world_impl);
     }
 }
 
 fn send_contact_events(
     mut begin_contact_events: EventWriter<b2BeginContactEvent>,
     mut end_contact_events: EventWriter<b2EndContactEvent>,
-    b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
 ) {
-    let contact_listener = b2_world.contact_listener();
-    let mut contact_listener = contact_listener.borrow_mut();
+    let mut b2_world_impl = b2_world.inner();
+    let contact_listener = b2_world_impl.contact_listener();
 
     {
+        let contact_listener = contact_listener.borrow();
         let fixture_contacts = contact_listener.fixture_contacts();
         let ended_contacts = contact_listener.ended_fixture_contacts();
         for key in contact_listener.begun_fixture_contacts() {
@@ -426,14 +433,16 @@ fn send_contact_events(
         }
     }
 
+    let mut contact_listener = contact_listener.deref().borrow_mut();
     contact_listener.clear_contact_changes();
 }
 
-fn copy_contacts(mut b2_world: NonSendMut<b2World>, mut contacts: ResMut<b2Contacts>) {
+fn copy_contacts(mut b2_world: ResMut<b2World>, mut contacts: ResMut<b2Contacts>) {
     let contacts = contacts.contacts_mut();
     contacts.clear();
 
-    let world_ptr = b2_world.get_world_ptr();
+    let mut b2_world_impl = b2_world.inner();
+    let world_ptr = b2_world_impl.get_world_ptr();
     let contact_count = i32::from(int32::from(world_ptr.as_ref().GetContactCount())) as usize;
 
     if contact_count == 0 {
@@ -462,14 +471,15 @@ fn copy_contacts(mut b2_world: NonSendMut<b2World>, mut contacts: ResMut<b2Conta
 }
 
 fn copy_particle_system_contacts(
-    b2_world: NonSendMut<b2World>,
+    mut b2_world: ResMut<b2World>,
     mut particle_systems: Query<(Entity, &mut b2ParticleSystemContacts)>,
 ) {
     for (entity, mut particle_system_contacts) in &mut particle_systems {
         let new_body_contacts = particle_system_contacts.body_contacts_mut();
         new_body_contacts.clear();
 
-        let particle_system_ptr = b2_world.particle_system_ptr(entity).unwrap();
+        let b2_world_impl = b2_world.inner();
+        let particle_system_ptr = b2_world_impl.particle_system_ptr(entity).unwrap();
         let body_contacts = unsafe {
             let body_contacts = particle_system_ptr.as_ref().GetBodyContacts();
             let count = i32::from(int32::from(
@@ -590,7 +600,7 @@ fn draw_fixtures(
         |transform: &GlobalTransform, p: Vec2| transform.transform_point(p.extend(0.)).truncate();
     for (fixture, debug_draw_fixtures) in fixtures.iter() {
         let body_entity = fixture.body();
-        let (body, transform) = bodies.get(body_entity).unwrap();
+        let Ok((body, transform)) = bodies.get(body_entity) else { continue; };
         let color = if body.awake {
             debug_draw_fixtures.awake_color
         } else {

@@ -3,13 +3,13 @@ extern crate bevy_liquidfun;
 
 use bevy::prelude::*;
 
-use bevy_liquidfun::dynamics::{b2BodyBundle, b2Fixture, b2FixtureDef};
-use bevy_liquidfun::plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin};
-use bevy_liquidfun::utils::DebugDrawFixtures;
 use bevy_liquidfun::{
     collision::b2Shape,
-    dynamics::{b2BodyDef, b2BodyType::Dynamic, b2World},
+    dynamics::{b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2FixtureDef, b2World},
+    plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
+    utils::DebugDrawFixtures,
 };
+
 fn main() {
     App::new()
         .add_plugins((
@@ -44,7 +44,7 @@ fn setup_camera(mut commands: Commands) {
 fn setup_physics_world(world: &mut World) {
     let gravity = Vec2::new(0., -9.81);
     let b2_world = b2World::new(gravity);
-    world.insert_non_send_resource(b2_world);
+    world.insert_resource(b2_world);
 }
 
 fn setup_physics_bodies(mut commands: Commands) {

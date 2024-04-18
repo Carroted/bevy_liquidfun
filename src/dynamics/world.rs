@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::pin::Pin;
 use std::rc::Rc;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use autocxx::WithinBox;
 use bevy::prelude::*;
@@ -39,8 +39,63 @@ impl Default for b2WorldSettings {
     }
 }
 
+#[derive(Resource)]
 #[allow(non_camel_case_types)]
-pub struct b2World {
+pub struct b2World(Arc<Mutex<b2WorldImpl>>);
+
+unsafe impl Sync for b2World {}
+unsafe impl Send for b2World {}
+
+impl b2World {
+    pub fn new(gravity: Vec2) -> Self {
+        let world_impl = b2WorldImpl::new(gravity);
+        b2World(Arc::new(Mutex::new(world_impl)))
+    }
+
+    pub(crate) fn inner(&mut self) -> MutexGuard<'_, b2WorldImpl> {
+        self.0.as_ref().lock().unwrap()
+    }
+
+    pub fn ray_cast<T: b2RayCastCallback + 'static>(
+        &mut self,
+        callback: T,
+        start: &Vec2,
+        end: &Vec2,
+    ) -> T::Result {
+        return self.ray_cast_with_filter(callback, b2NoOpFilter::default(), start, end);
+    }
+
+    pub fn ray_cast_with_filter<T: b2RayCastCallback + 'static, F: b2RayCastFilter + 'static>(
+        &mut self,
+        callback: T,
+        filter: F,
+        start: &Vec2,
+        end: &Vec2,
+    ) -> T::Result {
+        let ray_cast_wrapper = b2RayCast::new(callback, filter);
+        let ray_cast_wrapper = Arc::new(RefCell::new(ray_cast_wrapper));
+        let ray_cast_callback_wrapper = b2RayCastCallbackWrapper::new(ray_cast_wrapper.clone());
+        unsafe {
+            let ffi_callback: *mut ffi::b2RayCastCallback = ray_cast_callback_wrapper
+                .as_ref()
+                .borrow_mut()
+                .pin_mut()
+                .as_mut()
+                .get_unchecked_mut();
+            self.inner().ffi_world
+                .as_mut()
+                .RayCast(ffi_callback, &to_b2Vec2(start), &to_b2Vec2(end));
+        }
+        Arc::try_unwrap(ray_cast_wrapper)
+            .unwrap()
+            .into_inner()
+            .extract_hits()
+    }
+}
+
+
+#[allow(non_camel_case_types)]
+pub struct b2WorldImpl {
     ffi_world: Pin<Box<ffi::b2World>>,
 
     body_ptrs: HashMap<Entity, *mut ffi::b2Body>,
@@ -58,9 +113,7 @@ pub struct b2World {
     pub gravity: Vec2,
 }
 
-impl b2World {}
-
-impl b2World {
+impl b2WorldImpl {
     pub fn new(gravity: Vec2) -> Self {
         let ffi_gravity = to_b2Vec2(&gravity);
         let mut ffi_world = ffi::b2World::new(&ffi_gravity).within_box();
@@ -77,7 +130,7 @@ impl b2World {
                 .get_unchecked_mut();
             ffi_world.as_mut().SetContactListener(ffi_contact_listener);
         }
-        b2World {
+        b2WorldImpl {
             gravity,
             ffi_world,
             body_ptrs: HashMap::new(),
@@ -286,43 +339,8 @@ impl b2World {
         self.joint_ptrs.get_mut(joint_entity)
     }
 
-    pub(crate) fn contact_listener(&self) -> Arc<RefCell<b2ContactListener>> {
+    pub(crate) fn contact_listener(&mut self) -> Arc<RefCell<b2ContactListener>> {
         self.contact_listener.clone()
     }
 
-    pub fn ray_cast<T: b2RayCastCallback + 'static>(
-        &mut self,
-        callback: T,
-        start: &Vec2,
-        end: &Vec2,
-    ) -> T::Result {
-        return self.ray_cast_with_filter(callback, b2NoOpFilter::default(), start, end);
-    }
-
-    pub fn ray_cast_with_filter<T: b2RayCastCallback + 'static, F: b2RayCastFilter + 'static>(
-        &mut self,
-        callback: T,
-        filter: F,
-        start: &Vec2,
-        end: &Vec2,
-    ) -> T::Result {
-        let ray_cast_wrapper = b2RayCast::new(callback, filter);
-        let ray_cast_wrapper = Arc::new(RefCell::new(ray_cast_wrapper));
-        let ray_cast_callback_wrapper = b2RayCastCallbackWrapper::new(ray_cast_wrapper.clone());
-        unsafe {
-            let ffi_callback: *mut ffi::b2RayCastCallback = ray_cast_callback_wrapper
-                .as_ref()
-                .borrow_mut()
-                .pin_mut()
-                .as_mut()
-                .get_unchecked_mut();
-            self.ffi_world
-                .as_mut()
-                .RayCast(ffi_callback, &to_b2Vec2(start), &to_b2Vec2(end));
-        }
-        Arc::try_unwrap(ray_cast_wrapper)
-            .unwrap()
-            .into_inner()
-            .extract_hits()
-    }
 }

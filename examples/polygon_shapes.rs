@@ -8,12 +8,13 @@ use bevy::input::prelude::*;
 use bevy::prelude::*;
 use rand::prelude::*;
 
-use bevy_liquidfun::dynamics::{b2BodyBundle, b2Fixture, b2FixtureDef};
-use bevy_liquidfun::plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin};
-use bevy_liquidfun::utils::DebugDrawFixtures;
 use bevy_liquidfun::{
     collision::b2Shape,
-    dynamics::{b2BodyDef, b2BodyType::Dynamic, b2World},
+    dynamics::{
+        b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2FixtureDef, b2World,
+    },
+    plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
+    utils::DebugDrawFixtures,
 };
 
 #[derive(Resource)]
@@ -60,7 +61,7 @@ fn main() {
         .add_systems(Startup, (setup_camera, setup_instructions))
         .add_systems(
             Startup,
-            (setup_physics_world, setup_ground.after(setup_physics_world)),
+            (setup_physics_world, setup_ground).chain(),
         )
         .add_systems(Update, (check_create_body_keys, check_delete_body_key))
         .run();
@@ -98,10 +99,10 @@ fn setup_instructions(mut commands: Commands) {
     );
 }
 
-fn setup_physics_world(world: &mut World) {
+fn setup_physics_world(mut commands: Commands) {
     let gravity = Vec2::new(0., -9.81);
     let b2_world = b2World::new(gravity);
-    world.insert_non_send_resource(b2_world);
+    commands.insert_resource(b2_world);
 }
 
 fn setup_ground(mut commands: Commands) {

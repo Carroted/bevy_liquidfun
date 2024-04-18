@@ -6,7 +6,7 @@ use bevy::prelude::{Component, Entity};
 use libliquidfun_sys::box2d::ffi;
 use libliquidfun_sys::box2d::ffi::int32;
 
-use crate::dynamics::{b2ParticleBodyContact, b2World};
+use crate::dynamics::{b2ParticleBodyContact, b2WorldImpl};
 use crate::particles::b2ParticleDef;
 
 #[allow(non_camel_case_types)]
@@ -132,7 +132,7 @@ impl b2ParticleSystem {
         self.destruction_queue.push(particle_index);
     }
 
-    pub(crate) fn sync_with_world(&mut self, entity: Entity, b2_world: &b2World) {
+    pub(crate) fn sync_with_world(&mut self, entity: Entity, b2_world: &b2WorldImpl) {
         let particle_system_ptr = b2_world.particle_system_ptr(entity).unwrap();
         let particle_count = particle_system_ptr.as_ref().GetParticleCount();
         let particle_count = i32::from(particle_count) as usize;

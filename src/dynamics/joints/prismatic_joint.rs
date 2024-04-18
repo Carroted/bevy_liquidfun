@@ -1,4 +1,4 @@
-use crate::dynamics::{b2Joint, b2JointType, b2World, JointPtr};
+use crate::dynamics::{b2Joint, b2JointType, b2WorldImpl, JointPtr};
 use crate::internal::to_b2Vec2;
 use bevy::ecs::system::EntityCommand;
 use bevy::prelude::*;
@@ -57,7 +57,7 @@ impl b2PrismaticJoint {
 
     pub(crate) fn create_ffi_joint(
         &self,
-        b2_world: &mut b2World,
+        b2_world: &mut b2WorldImpl,
         body_a: Entity,
         body_b: Entity,
         collide_connected: bool,

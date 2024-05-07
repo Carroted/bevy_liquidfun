@@ -10,8 +10,12 @@ pub mod dynamics {
     mod joints {
         mod joint;
         pub use joint::*;
+
         mod revolute_joint;
         pub use revolute_joint::*;
+
+        mod distance_joint;
+        pub use distance_joint::*;
 
         mod prismatic_joint;
         pub use prismatic_joint::*;

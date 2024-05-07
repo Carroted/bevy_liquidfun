@@ -8,13 +8,20 @@ use bevy::transform::TransformSystem;
 use libliquidfun_sys::box2d::ffi::int32;
 
 use crate::collision::b2Shape;
-use crate::{dynamics::{
-    b2BeginContactEvent, b2BodiesInContact, b2Body, b2Contact, b2Contacts, b2EndContactEvent, b2Fixture, b2FixturesInContact, b2Joint, b2ParticleBodyContact, b2ParticlesInContact, b2PrismaticJoint, b2RevoluteJoint, b2World, b2WorldSettings, ExternalForce, ExternalImpulse, ExternalTorque, GravityScale, JointPtr
-}, internal::to_b2Vec2};
+use crate::dynamics::b2DistanceJoint;
 use crate::particles::{b2ParticleGroup, b2ParticleSystem, b2ParticleSystemContacts};
 use crate::schedule::{LiquidFunSchedulePlugin, PhysicsTimeAccumulator, PhysicsUpdateStep};
 use crate::schedule::{PhysicsSchedule, PhysicsUpdate};
 use crate::utils::{DebugDrawFixtures, DebugDrawParticleSystem};
+use crate::{
+    dynamics::{
+        b2BeginContactEvent, b2BodiesInContact, b2Body, b2Contact, b2Contacts, b2EndContactEvent,
+        b2Fixture, b2FixturesInContact, b2Joint, b2ParticleBodyContact, b2ParticlesInContact,
+        b2PrismaticJoint, b2RevoluteJoint, b2World, b2WorldSettings, ExternalForce,
+        ExternalImpulse, ExternalTorque, GravityScale, JointPtr,
+    },
+    internal::to_b2Vec2,
+};
 
 #[derive(Default)]
 pub struct LiquidFunPlugin {
@@ -48,6 +55,7 @@ impl Plugin for LiquidFunPlugin {
                         create_fixtures,
                         create_revolute_joints,
                         create_prismatic_joints,
+                        create_distance_joints,
                         create_particle_systems,
                         create_particle_groups,
                         create_queued_particles,
@@ -58,6 +66,7 @@ impl Plugin for LiquidFunPlugin {
                         sync_bodies_to_world,
                         sync_revolute_joints_to_world,
                         sync_prismatic_joints_to_world,
+                        sync_distance_joints_to_world,
                     )
                         .chain()
                         .in_set(PhysicsUpdateStep::SyncToPhysicsWorld),
@@ -144,7 +153,9 @@ fn create_fixtures(
 ) {
     for (fixture_entity, mut fixture) in added.iter_mut() {
         let (body_entity, mut body) = bodies.get_mut(fixture.body()).unwrap();
-        b2_world.inner().create_fixture((fixture_entity, &mut fixture), (body_entity, &mut body));
+        b2_world
+            .inner()
+            .create_fixture((fixture_entity, &mut fixture), (body_entity, &mut body));
     }
 }
 
@@ -196,13 +207,39 @@ fn create_prismatic_joints(
     }
 }
 
+fn create_distance_joints(
+    mut b2_world: ResMut<b2World>,
+    mut added: Query<(Entity, &b2Joint, &b2DistanceJoint), Added<b2DistanceJoint>>,
+    mut bodies: Query<(Entity, &mut b2Body)>,
+) {
+    for (joint_entity, joint, distance_joint) in added.iter_mut() {
+        let [mut body_a, mut body_b] = bodies
+            .get_many_mut([*joint.body_a(), *joint.body_b()])
+            .unwrap();
+        let mut b2_world_impl = b2_world.inner();
+        let joint_ptr = distance_joint.create_ffi_joint(
+            b2_world_impl.borrow_mut(),
+            body_a.0,
+            body_b.0,
+            joint.collide_connected(),
+        );
+        b2_world_impl.register_joint(
+            (joint_entity, &joint, joint_ptr),
+            (body_a.0, &mut body_a.1),
+            (body_b.0, &mut body_b.1),
+        );
+    }
+}
+
 fn create_particle_systems(
     mut commands: Commands,
     mut b2_world: ResMut<b2World>,
     mut added: Query<(Entity, &mut b2ParticleSystem), Added<b2ParticleSystem>>,
 ) {
     for (entity, mut particle_system) in added.iter_mut() {
-        b2_world.inner().create_particle_system(entity, &mut particle_system);
+        b2_world
+            .inner()
+            .create_particle_system(entity, &mut particle_system);
         commands
             .entity(entity)
             .insert(b2ParticleSystemContacts::default());
@@ -305,10 +342,20 @@ fn sync_prismatic_joints_to_world(
     }
 }
 
-fn apply_forces(
+fn sync_distance_joints_to_world(
     mut b2_world: ResMut<b2World>,
-    external_forces: Query<(Entity, &ExternalForce)>,
+    joints: Query<(Entity, &b2DistanceJoint), Changed<b2DistanceJoint>>,
 ) {
+    let mut b2_world_impl = b2_world.inner();
+    for (entity, joint) in joints.iter() {
+        let joint_ptr = b2_world_impl.joint_ptr_mut(&entity).unwrap();
+        if let JointPtr::Distance(joint_ptr) = joint_ptr {
+            joint.sync_to_world(*joint_ptr);
+        }
+    }
+}
+
+fn apply_forces(mut b2_world: ResMut<b2World>, external_forces: Query<(Entity, &ExternalForce)>) {
     let mut b2_world_impl = b2_world.inner();
     for (entity, external_force) in external_forces.iter() {
         let body_ptr = b2_world_impl.body_ptr_mut(entity);
@@ -600,7 +647,9 @@ fn draw_fixtures(
         |transform: &GlobalTransform, p: Vec2| transform.transform_point(p.extend(0.)).truncate();
     for (fixture, debug_draw_fixtures) in fixtures.iter() {
         let body_entity = fixture.body();
-        let Ok((body, transform)) = bodies.get(body_entity) else { continue; };
+        let Ok((body, transform)) = bodies.get(body_entity) else {
+            continue;
+        };
         let color = if body.awake {
             debug_draw_fixtures.awake_color
         } else {

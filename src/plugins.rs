@@ -39,6 +39,12 @@ impl Plugin for LiquidFunPlugin {
         app.add_plugins(LiquidFunSchedulePlugin)
             .insert_resource(self.settings.clone())
             .init_resource::<b2Contacts>()
+            .register_type::<ExternalForce>()
+            .register_type::<ExternalImpulse>()
+            .register_type::<ExternalTorque>()
+            .register_type::<b2DistanceJoint>()
+            .register_type::<b2PrismaticJoint>()
+            .register_type::<b2RevoluteJoint>()
             .add_systems(
                 PhysicsSchedule,
                 (

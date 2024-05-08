@@ -6,7 +6,8 @@ use libliquidfun_sys::box2d::ffi;
 use std::pin::Pin;
 
 #[allow(non_camel_case_types)]
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
 pub struct b2PrismaticJoint {
     /// The local anchor point relative to bodyA's origin.
     local_anchor_a: Vec2,

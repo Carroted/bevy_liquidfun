@@ -2,14 +2,15 @@ use std::pin::Pin;
 
 use bevy::ecs::system::EntityCommand;
 use bevy::math::Vec2;
-use bevy::prelude::{Component, Entity, World};
+use bevy::prelude::*;
 use libliquidfun_sys::box2d::ffi;
 
 use crate::dynamics::{b2Joint, b2JointType, b2WorldImpl, JointPtr};
 use crate::internal::to_b2Vec2;
 
 #[allow(non_camel_case_types)]
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
 pub struct b2RevoluteJoint {
     /// The local anchor point relative to bodyA's origin.
     local_anchor_a: Vec2,

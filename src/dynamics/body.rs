@@ -152,7 +152,8 @@ impl Default for b2BodyBundle {
     }
 }
 
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug, Default, Reflect)]
+#[reflect(Component)]
 pub struct ExternalForce {
     force: Vec2,
     pub should_wake: bool,
@@ -205,7 +206,8 @@ impl ExternalForce {
     }
 }
 
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug, Default, Reflect)]
+#[reflect(Component)]
 pub struct ExternalImpulse {
     impulse: Vec2,
     pub should_wake: bool,
@@ -260,7 +262,9 @@ impl ExternalImpulse {
         self.angular_impulse = 0.;
     }
 }
-#[derive(Component, Debug, Default)]
+
+#[derive(Component, Debug, Default, Reflect)]
+#[reflect(Component)]
 pub struct ExternalTorque {
     pub torque: f32,
     pub should_wake: bool,

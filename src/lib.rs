@@ -19,6 +19,9 @@ pub mod dynamics {
 
         mod prismatic_joint;
         pub use prismatic_joint::*;
+
+        mod weld_joint;
+        pub use weld_joint::*;
     }
     mod contacts {
         mod contact_events;

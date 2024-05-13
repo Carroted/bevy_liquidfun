@@ -47,12 +47,12 @@ impl b2Joint {
 pub enum b2JointType {
     Revolute,
     Prismatic,
-    Distance, 
+    Distance,
+    Weld,
     _Pulley, // TODO
     _Mouse,
     _Gear,
     _Wheel,
-    _Weld,
     _Friction,
     _Motor,
     _Area,
@@ -61,12 +61,12 @@ pub enum b2JointType {
 pub(crate) enum JointPtr {
     Revolute(*mut ffi::b2RevoluteJoint),
     Prismatic(*mut ffi::b2PrismaticJoint),
-    Distance(*mut ffi::b2DistanceJoint), 
+    Distance(*mut ffi::b2DistanceJoint),
+    Weld(*mut ffi::b2WeldJoint),
     _Pulley, // TODO
     _Mouse,
     _Gear,
     _Wheel,
-    _Weld,
     _Friction,
     _Motor,
     _Area,

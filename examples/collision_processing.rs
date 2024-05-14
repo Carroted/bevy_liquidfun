@@ -8,10 +8,14 @@ use bevy::prelude::*;
 use rand::prelude::*;
 
 use bevy_liquidfun::{
-    collision::b2Shape, dynamics::{
+    collision::b2Shape,
+    dynamics::{
         b2BeginContactEvent, b2Body, b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2Fixture,
         b2FixtureDef, b2World,
-    }, plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin}, schedule::{PhysicsSchedule, PhysicsUpdateStep}, utils::DebugDrawFixtures
+    },
+    plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
+    schedule::{PhysicsSchedule, PhysicsUpdateStep},
+    utils::DebugDrawFixtures,
 };
 
 fn main() {
@@ -26,7 +30,10 @@ fn main() {
             Startup,
             (setup_physics_world, setup_bodies.after(setup_physics_world)),
         )
-        .add_systems(PhysicsSchedule, process_collisions.in_set(PhysicsUpdateStep::UserCode))
+        .add_systems(
+            PhysicsSchedule,
+            process_collisions.in_set(PhysicsUpdateStep::UserCode),
+        )
         .run();
 }
 

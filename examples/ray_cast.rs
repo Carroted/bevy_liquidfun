@@ -67,10 +67,7 @@ fn main() {
             shapes: available_shapes,
         })
         .add_systems(Startup, (setup_camera, setup_instructions))
-        .add_systems(
-            Startup,
-            (setup_physics_world, setup_ground).chain(),
-        )
+        .add_systems(Startup, (setup_physics_world, setup_ground).chain())
         .add_systems(
             Update,
             (

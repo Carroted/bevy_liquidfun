@@ -69,6 +69,7 @@ impl Plugin for LiquidFunPlugin {
                         create_queued_particles,
                         destroy_removed_fixtures,
                         destroy_removed_bodies,
+                        destroy_removed_joints,
                         destroy_queued_particles,
                         apply_deferred,
                         sync_bodies_to_world,
@@ -317,6 +318,17 @@ fn destroy_removed_bodies(
         }
 
         b2_world_impl.destroy_body_for_entity(entity);
+    }
+}
+
+fn destroy_removed_joints(
+    mut b2_world: ResMut<b2World>,
+    mut removed: RemovedComponents<b2Joint>,
+    mut commands: Commands,
+) {
+    let mut b2_world_impl = b2_world.inner();
+    for entity in removed.read() {
+        b2_world_impl.destroy_joint(entity);
     }
 }
 

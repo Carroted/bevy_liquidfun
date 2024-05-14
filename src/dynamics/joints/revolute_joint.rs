@@ -89,7 +89,7 @@ impl b2RevoluteJoint {
     }
 
     pub(crate) fn sync_to_world(&self, joint_ptr: *mut ffi::b2RevoluteJoint) {
-        let mut joint_ptr = unsafe { Pin::new_unchecked(joint_ptr.as_mut().unwrap())};
+        let mut joint_ptr = unsafe { Pin::new_unchecked(joint_ptr.as_mut().unwrap()) };
         joint_ptr.as_mut().EnableLimit(self.enable_limit);
         joint_ptr
             .as_mut()

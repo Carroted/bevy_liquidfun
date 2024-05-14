@@ -82,9 +82,11 @@ impl b2World {
                 .pin_mut()
                 .as_mut()
                 .get_unchecked_mut();
-            self.inner().ffi_world
-                .as_mut()
-                .RayCast(ffi_callback, &to_b2Vec2(start), &to_b2Vec2(end));
+            self.inner().ffi_world.as_mut().RayCast(
+                ffi_callback,
+                &to_b2Vec2(start),
+                &to_b2Vec2(end),
+            );
         }
         Arc::try_unwrap(ray_cast_wrapper)
             .unwrap()
@@ -92,7 +94,6 @@ impl b2World {
             .extract_hits()
     }
 }
-
 
 #[allow(non_camel_case_types)]
 pub struct b2WorldImpl {
@@ -159,7 +160,10 @@ impl b2WorldImpl {
         }
     }
 
-    pub(crate) fn body_ptr_mut<'body>(&mut self, entity: Entity) -> Option<Pin<&'body mut ffi::b2Body>> {
+    pub(crate) fn body_ptr_mut<'body>(
+        &mut self,
+        entity: Entity,
+    ) -> Option<Pin<&'body mut ffi::b2Body>> {
         if let Some(&body_ptr) = self.body_ptrs.get(&entity) {
             unsafe {
                 let body_ref = &mut *body_ptr;
@@ -197,6 +201,30 @@ impl b2WorldImpl {
 
         unsafe {
             self.ffi_world.as_mut().DestroyBody(body_ptr);
+        }
+    }
+
+    pub(crate) fn destroy_joint(&mut self, entity: Entity) {
+        let Some(joint_ptr) = self.joint_ptrs.remove(&entity) else {
+            warn!("Cannot find joint pointer!");
+            return;
+        };
+
+        unsafe {
+            let ptr: *mut ffi::b2Joint = match joint_ptr {
+                JointPtr::Revolute(ptr) => ptr as *mut ffi::b2Joint,
+                JointPtr::Prismatic(ptr) => ptr as *mut ffi::b2Joint,
+                JointPtr::Distance(ptr) => ptr as *mut ffi::b2Joint,
+                JointPtr::Weld(ptr) => ptr as *mut ffi::b2Joint,
+                JointPtr::_Pulley => todo!("Not implemented"),
+                JointPtr::_Mouse => todo!("Not implemented"),
+                JointPtr::_Gear => todo!("Not implemented"),
+                JointPtr::_Wheel => todo!("Not implemented"),
+                JointPtr::_Friction => todo!("Not implemented"),
+                JointPtr::_Motor => todo!("Not implemented"),
+                JointPtr::_Area => todo!("Not implemented"),
+            };
+            self.ffi_world.as_mut().DestroyJoint(ptr);
         }
     }
 
@@ -266,7 +294,8 @@ impl b2WorldImpl {
         let definition: *const ffi::b2ParticleSystemDef = &definition;
         unsafe {
             let ffi_particle_system_ptr = self.ffi_world.as_mut().CreateParticleSystem(definition);
-            let mut ffi_particle_system = Pin::new_unchecked(ffi_particle_system_ptr.as_mut().unwrap());
+            let mut ffi_particle_system =
+                Pin::new_unchecked(ffi_particle_system_ptr.as_mut().unwrap());
             let positions = particle_system.get_positions_mut();
             let capacity = i32::try_from(positions.capacity()).unwrap();
             let capacity: int32 = int32::from(capacity);
@@ -313,7 +342,10 @@ impl b2WorldImpl {
         self.body_to_fixtures.get(body_entity)
     }
 
-    pub(crate) fn particle_system_ptr<'p>(&self, entity: Entity) -> Option<Pin<&'p ffi::b2ParticleSystem>> {
+    pub(crate) fn particle_system_ptr<'p>(
+        &self,
+        entity: Entity,
+    ) -> Option<Pin<&'p ffi::b2ParticleSystem>> {
         if let Some(&ptr) = self.particle_system_ptrs.get(&entity) {
             unsafe {
                 let ps_ref = &*ptr;
@@ -324,7 +356,10 @@ impl b2WorldImpl {
         }
     }
 
-    pub(crate) fn particle_system_ptr_mut<'p>(&mut self, entity: Entity) -> Option<Pin<&'p mut ffi::b2ParticleSystem>> {
+    pub(crate) fn particle_system_ptr_mut<'p>(
+        &mut self,
+        entity: Entity,
+    ) -> Option<Pin<&'p mut ffi::b2ParticleSystem>> {
         if let Some(&ptr) = self.particle_system_ptrs.get(&entity) {
             unsafe {
                 let ps_ref = &mut *ptr;
@@ -342,5 +377,4 @@ impl b2WorldImpl {
     pub(crate) fn contact_listener(&mut self) -> Arc<RefCell<b2ContactListener>> {
         self.contact_listener.clone()
     }
-
 }

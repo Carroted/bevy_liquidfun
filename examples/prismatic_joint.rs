@@ -23,13 +23,7 @@ fn main() {
             LiquidFunDebugDrawPlugin,
         ))
         .add_systems(Startup, (setup_camera, setup_instructions))
-        .add_systems(
-            Startup,
-            (
-                setup_physics_world,
-                setup_physics_bodies,
-            ).chain(),
-        )
+        .add_systems(Startup, (setup_physics_world, setup_physics_bodies).chain())
         .add_systems(Update, check_keys)
         .run();
 }

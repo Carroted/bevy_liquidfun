@@ -38,19 +38,20 @@ impl Plugin for LiquidFunSchedulePlugin {
             PhysicsUpdate.before(TransformSystem::TransformPropagate),
         );
 
-        let mut physics_schedule = Schedule::new(PhysicsSchedule);
-        physics_schedule.configure_sets(
-            (
-                PhysicsUpdateStep::ClearEvents,
-                PhysicsUpdateStep::UserCode,
-                PhysicsUpdateStep::SyncToPhysicsWorld,
-                PhysicsUpdateStep::ApplyForces,
-                PhysicsUpdateStep::Step,
-                PhysicsUpdateStep::SyncFromPhysicsWorld,
-            )
-                .chain(),
-        );
-        app.add_schedule(physics_schedule);
+        app.edit_schedule(PhysicsSchedule, |physics_schedule| {
+            physics_schedule.configure_sets(
+                (
+                    PhysicsUpdateStep::ClearEvents,
+                    PhysicsUpdateStep::UserCode,
+                    PhysicsUpdateStep::SyncToPhysicsWorld,
+                    PhysicsUpdateStep::ApplyForces,
+                    PhysicsUpdateStep::Step,
+                    PhysicsUpdateStep::SyncFromPhysicsWorld,
+                )
+                    .chain(),
+            );
+        });
+
         app.add_systems(Update, run_liquidfun_schedule.in_set(PhysicsUpdate));
     }
 }

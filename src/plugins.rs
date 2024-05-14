@@ -324,7 +324,6 @@ fn destroy_removed_bodies(
 fn destroy_removed_joints(
     mut b2_world: ResMut<b2World>,
     mut removed: RemovedComponents<b2Joint>,
-    mut commands: Commands,
 ) {
     let mut b2_world_impl = b2_world.inner();
     for entity in removed.read() {

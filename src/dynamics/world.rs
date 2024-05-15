@@ -18,7 +18,8 @@ use crate::internal::*;
 use crate::particles::{b2ParticleGroup, b2ParticleSystem};
 
 #[allow(non_camel_case_types)]
-#[derive(Resource, Clone)]
+#[derive(Resource, Clone, Reflect)]
+#[reflect(Resource)]
 pub struct b2WorldSettings {
     pub time_step: f32,
     pub max_frame_delta: f32,
@@ -44,6 +45,7 @@ impl Default for b2WorldSettings {
 pub struct b2World(Arc<Mutex<b2WorldImpl>>);
 
 unsafe impl Sync for b2World {}
+
 unsafe impl Send for b2World {}
 
 impl b2World {

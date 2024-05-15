@@ -8,6 +8,8 @@ use libliquidfun_sys::box2d::ffi;
 use crate::dynamics::{b2Joint, b2JointType, b2WorldImpl, JointPtr};
 use crate::internal::to_b2Vec2;
 
+use super::{SyncJointToWorld, ToJointPtr};
+
 #[allow(non_camel_case_types)]
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
@@ -55,8 +57,10 @@ impl b2RevoluteJoint {
             max_motor_torque: def.max_motor_torque,
         }
     }
+}
 
-    pub(crate) fn create_ffi_joint<'a>(
+impl ToJointPtr for b2RevoluteJoint {
+    fn create_ffi_joint<'a>(
         &self,
         b2_world: &mut b2WorldImpl,
         body_a: Entity,
@@ -87,8 +91,13 @@ impl b2RevoluteJoint {
             JointPtr::Revolute(ffi_joint)
         }
     }
+}
 
-    pub(crate) fn sync_to_world(&self, joint_ptr: *mut ffi::b2RevoluteJoint) {
+impl SyncJointToWorld for b2RevoluteJoint {
+    fn sync_to_world(&self, joint_ptr: &mut JointPtr) {
+        let JointPtr::Revolute(joint_ptr) = joint_ptr else {
+            panic!("Expected joint of type b2RevoluteJoint")
+        };
         let mut joint_ptr = unsafe { Pin::new_unchecked(joint_ptr.as_mut().unwrap()) };
         joint_ptr.as_mut().EnableLimit(self.enable_limit);
         joint_ptr

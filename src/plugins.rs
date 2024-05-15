@@ -22,7 +22,7 @@ use crate::{
         b2BeginContactEvent, b2BodiesInContact, b2Body, b2Contact, b2Contacts, b2EndContactEvent,
         b2Fixture, b2FixturesInContact, b2Joint, b2ParticleBodyContact, b2ParticlesInContact,
         b2PrismaticJoint, b2RevoluteJoint, b2World, b2WorldSettings, ExternalForce,
-        ExternalImpulse, ExternalTorque, GravityScale, JointPtr,
+        ExternalImpulse, ExternalTorque, GravityScale,
     },
     internal::to_b2Vec2,
 };
@@ -64,11 +64,11 @@ impl Plugin for LiquidFunPlugin {
                         create_bodies,
                         create_fixtures,
                         (
-                        create_revolute_joints,
-                        create_prismatic_joints,
-                        create_distance_joints,
-                        create_weld_joints,
+                        create_joints::<b2DistanceJoint>,
                         create_joints::<b2MotorJoint>,
+                        create_joints::<b2PrismaticJoint>,
+                        create_joints::<b2RevoluteJoint>,
+                        create_joints::<b2WeldJoint>,
                         ).chain(),
                         create_particle_systems,
                         create_particle_groups,
@@ -80,11 +80,11 @@ impl Plugin for LiquidFunPlugin {
                         apply_deferred,
                         sync_bodies_to_world,
                         (
-                        sync_revolute_joints_to_world,
-                        sync_prismatic_joints_to_world,
-                        sync_distance_joints_to_world,
-                        sync_weld_joints_to_world,
+                        sync_joints_to_world::<b2DistanceJoint>,
                         sync_joints_to_world::<b2MotorJoint>,
+                        sync_joints_to_world::<b2PrismaticJoint>,
+                        sync_joints_to_world::<b2RevoluteJoint>,
+                        sync_joints_to_world::<b2WeldJoint>,
                         ).chain()
                     )
                         .chain()
@@ -175,102 +175,6 @@ fn create_fixtures(
         b2_world
             .inner()
             .create_fixture((fixture_entity, &mut fixture), (body_entity, &mut body));
-    }
-}
-
-fn create_revolute_joints(
-    mut b2_world: ResMut<b2World>,
-    mut added: Query<(Entity, &b2Joint, &b2RevoluteJoint), Added<b2RevoluteJoint>>,
-    mut bodies: Query<(Entity, &mut b2Body)>,
-) {
-    for (joint_entity, joint, revolute_joint) in added.iter_mut() {
-        let [mut body_a, mut body_b] = bodies
-            .get_many_mut([*joint.body_a(), *joint.body_b()])
-            .unwrap();
-        let mut b2_world_impl = b2_world.inner();
-        let joint_ptr = revolute_joint.create_ffi_joint(
-            b2_world_impl.borrow_mut(),
-            body_a.0,
-            body_b.0,
-            joint.collide_connected(),
-        );
-        b2_world_impl.register_joint(
-            (joint_entity, &joint, joint_ptr),
-            (body_a.0, &mut body_a.1),
-            (body_b.0, &mut body_b.1),
-        );
-    }
-}
-
-fn create_prismatic_joints(
-    mut b2_world: ResMut<b2World>,
-    mut added: Query<(Entity, &b2Joint, &b2PrismaticJoint), Added<b2PrismaticJoint>>,
-    mut bodies: Query<(Entity, &mut b2Body)>,
-) {
-    for (joint_entity, joint, prismatic_joint) in added.iter_mut() {
-        let [mut body_a, mut body_b] = bodies
-            .get_many_mut([*joint.body_a(), *joint.body_b()])
-            .unwrap();
-        let mut b2_world_impl = b2_world.inner();
-        let joint_ptr = prismatic_joint.create_ffi_joint(
-            b2_world_impl.borrow_mut(),
-            body_a.0,
-            body_b.0,
-            joint.collide_connected(),
-        );
-        b2_world_impl.register_joint(
-            (joint_entity, &joint, joint_ptr),
-            (body_a.0, &mut body_a.1),
-            (body_b.0, &mut body_b.1),
-        );
-    }
-}
-
-fn create_distance_joints(
-    mut b2_world: ResMut<b2World>,
-    mut added: Query<(Entity, &b2Joint, &b2DistanceJoint), Added<b2DistanceJoint>>,
-    mut bodies: Query<(Entity, &mut b2Body)>,
-) {
-    for (joint_entity, joint, distance_joint) in added.iter_mut() {
-        let [mut body_a, mut body_b] = bodies
-            .get_many_mut([*joint.body_a(), *joint.body_b()])
-            .unwrap();
-        let mut b2_world_impl = b2_world.inner();
-        let joint_ptr = distance_joint.create_ffi_joint(
-            b2_world_impl.borrow_mut(),
-            body_a.0,
-            body_b.0,
-            joint.collide_connected(),
-        );
-        b2_world_impl.register_joint(
-            (joint_entity, &joint, joint_ptr),
-            (body_a.0, &mut body_a.1),
-            (body_b.0, &mut body_b.1),
-        );
-    }
-}
-
-fn create_weld_joints(
-    mut b2_world: ResMut<b2World>,
-    mut added: Query<(Entity, &b2Joint, &b2WeldJoint), Added<b2WeldJoint>>,
-    mut bodies: Query<(Entity, &mut b2Body)>,
-) {
-    for (joint_entity, joint, weld_joint) in added.iter_mut() {
-        let [mut body_a, mut body_b] = bodies
-            .get_many_mut([*joint.body_a(), *joint.body_b()])
-            .unwrap();
-        let mut b2_world_impl = b2_world.inner();
-        let joint_ptr = weld_joint.create_ffi_joint(
-            b2_world_impl.borrow_mut(),
-            body_a.0,
-            body_b.0,
-            joint.collide_connected(),
-        );
-        b2_world_impl.register_joint(
-            (joint_entity, &joint, joint_ptr),
-            (body_a.0, &mut body_a.1),
-            (body_b.0, &mut body_b.1),
-        );
     }
 }
 
@@ -390,58 +294,6 @@ fn sync_bodies_to_world(
     let mut b2_world_impl = b2_world.inner();
     for (entity, body) in bodies.iter() {
         body.sync_to_world(entity, b2_world_impl.borrow_mut());
-    }
-}
-
-fn sync_revolute_joints_to_world(
-    mut b2_world: ResMut<b2World>,
-    joints: Query<(Entity, &b2RevoluteJoint), Changed<b2RevoluteJoint>>,
-) {
-    let mut b2_world_impl = b2_world.inner();
-    for (entity, joint) in joints.iter() {
-        let joint_ptr = b2_world_impl.joint_ptr_mut(&entity).unwrap();
-        if let JointPtr::Revolute(joint_ptr) = joint_ptr {
-            joint.sync_to_world(*joint_ptr);
-        }
-    }
-}
-
-fn sync_prismatic_joints_to_world(
-    mut b2_world: ResMut<b2World>,
-    joints: Query<(Entity, &b2PrismaticJoint), Changed<b2PrismaticJoint>>,
-) {
-    let mut b2_world_impl = b2_world.inner();
-    for (entity, joint) in joints.iter() {
-        let joint_ptr = b2_world_impl.joint_ptr_mut(&entity).unwrap();
-        if let JointPtr::Prismatic(joint_ptr) = joint_ptr {
-            joint.sync_to_world(*joint_ptr);
-        }
-    }
-}
-
-fn sync_distance_joints_to_world(
-    mut b2_world: ResMut<b2World>,
-    joints: Query<(Entity, &b2DistanceJoint), Changed<b2DistanceJoint>>,
-) {
-    let mut b2_world_impl = b2_world.inner();
-    for (entity, joint) in joints.iter() {
-        let joint_ptr = b2_world_impl.joint_ptr_mut(&entity).unwrap();
-        if let JointPtr::Distance(joint_ptr) = joint_ptr {
-            joint.sync_to_world(*joint_ptr);
-        }
-    }
-}
-
-fn sync_weld_joints_to_world(
-    mut b2_world: ResMut<b2World>,
-    joints: Query<(Entity, &b2WeldJoint), Changed<b2WeldJoint>>,
-) {
-    let mut b2_world_impl = b2_world.inner();
-    for (entity, joint) in joints.iter() {
-        let joint_ptr = b2_world_impl.joint_ptr_mut(&entity).unwrap();
-        if let JointPtr::Weld(joint_ptr) = joint_ptr {
-            joint.sync_to_world(*joint_ptr);
-        }
     }
 }
 

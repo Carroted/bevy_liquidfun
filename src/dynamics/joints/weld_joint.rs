@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use libliquidfun_sys::box2d::ffi;
 use std::pin::Pin;
 
-use super::{b2Joint, b2JointType};
+use super::{b2Joint, b2JointType, SyncJointToWorld, ToJointPtr};
 
 #[allow(non_camel_case_types)]
 #[derive(Component, Debug, Reflect)]
@@ -38,8 +38,10 @@ impl b2WeldJoint {
             damping: def.damping,
         }
     }
+}
 
-    pub(crate) fn create_ffi_joint(
+impl ToJointPtr for b2WeldJoint {
+    fn create_ffi_joint(
         &self,
         b2_world: &mut b2WorldImpl,
         body_a: Entity,
@@ -66,8 +68,13 @@ impl b2WeldJoint {
             JointPtr::Weld(ffi_joint)
         }
     }
+}
 
-    pub(crate) fn sync_to_world(&self, joint_ptr: *mut ffi::b2WeldJoint) {
+impl SyncJointToWorld for b2WeldJoint {
+    fn sync_to_world(&self, joint_ptr: &mut JointPtr) {
+        let JointPtr::Weld(joint_ptr) = joint_ptr else {
+            panic!("Expected joint of type b2WeldJoint")
+        };
         let mut joint_ptr = unsafe { Pin::new_unchecked(joint_ptr.as_mut().unwrap()) };
         joint_ptr.as_mut().SetStiffness(self.stiffness);
         joint_ptr.as_mut().SetDamping(self.damping);

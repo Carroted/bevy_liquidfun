@@ -1,6 +1,8 @@
 use bevy::prelude::{Component, Entity};
 use libliquidfun_sys::box2d::ffi;
 
+use crate::dynamics::b2WorldImpl;
+
 #[allow(non_camel_case_types)]
 #[derive(Component, Debug)]
 pub struct b2Joint {
@@ -42,6 +44,20 @@ impl b2Joint {
     }
 }
 
+pub(crate) trait ToJointPtr {
+    fn create_ffi_joint(
+        &self,
+        b2_world: &mut b2WorldImpl,
+        body_a: Entity,
+        body_b: Entity,
+        collide_connected: bool,
+    ) -> JointPtr;
+}
+
+pub(crate) trait SyncJointToWorld {
+    fn sync_to_world(&self, joint_ptr: &mut JointPtr);
+}
+
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
 pub enum b2JointType {
@@ -49,12 +65,12 @@ pub enum b2JointType {
     Prismatic,
     Distance,
     Weld,
+    Motor,
     _Pulley, // TODO
     _Mouse,
     _Gear,
     _Wheel,
     _Friction,
-    _Motor,
     _Area,
 }
 
@@ -63,11 +79,11 @@ pub(crate) enum JointPtr {
     Prismatic(*mut ffi::b2PrismaticJoint),
     Distance(*mut ffi::b2DistanceJoint),
     Weld(*mut ffi::b2WeldJoint),
+    Motor(*mut ffi::b2MotorJoint),
     _Pulley, // TODO
     _Mouse,
     _Gear,
     _Wheel,
     _Friction,
-    _Motor,
     _Area,
 }

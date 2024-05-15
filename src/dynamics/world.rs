@@ -216,12 +216,12 @@ impl b2WorldImpl {
                 JointPtr::Prismatic(ptr) => ptr as *mut ffi::b2Joint,
                 JointPtr::Distance(ptr) => ptr as *mut ffi::b2Joint,
                 JointPtr::Weld(ptr) => ptr as *mut ffi::b2Joint,
+                JointPtr::Motor(ptr) => ptr as *mut ffi::b2Joint,
                 JointPtr::_Pulley => todo!("Not implemented"),
                 JointPtr::_Mouse => todo!("Not implemented"),
                 JointPtr::_Gear => todo!("Not implemented"),
                 JointPtr::_Wheel => todo!("Not implemented"),
                 JointPtr::_Friction => todo!("Not implemented"),
-                JointPtr::_Motor => todo!("Not implemented"),
                 JointPtr::_Area => todo!("Not implemented"),
             };
             self.ffi_world.as_mut().DestroyJoint(ptr);

@@ -9,7 +9,10 @@ use libliquidfun_sys::box2d::ffi::int32;
 
 use crate::collision::b2Shape;
 use crate::dynamics::b2DistanceJoint;
+use crate::dynamics::b2MotorJoint;
 use crate::dynamics::b2WeldJoint;
+use crate::dynamics::SyncJointToWorld;
+use crate::dynamics::ToJointPtr;
 use crate::particles::{b2ParticleGroup, b2ParticleSystem, b2ParticleSystemContacts};
 use crate::schedule::{LiquidFunSchedulePlugin, PhysicsTimeAccumulator, PhysicsUpdateStep};
 use crate::schedule::{PhysicsSchedule, PhysicsUpdate};
@@ -60,10 +63,13 @@ impl Plugin for LiquidFunPlugin {
                     (
                         create_bodies,
                         create_fixtures,
+                        (
                         create_revolute_joints,
                         create_prismatic_joints,
                         create_distance_joints,
                         create_weld_joints,
+                        create_joints::<b2MotorJoint>,
+                        ).chain(),
                         create_particle_systems,
                         create_particle_groups,
                         create_queued_particles,
@@ -73,10 +79,13 @@ impl Plugin for LiquidFunPlugin {
                         destroy_queued_particles,
                         apply_deferred,
                         sync_bodies_to_world,
+                        (
                         sync_revolute_joints_to_world,
                         sync_prismatic_joints_to_world,
                         sync_distance_joints_to_world,
                         sync_weld_joints_to_world,
+                        sync_joints_to_world::<b2MotorJoint>,
+                        ).chain()
                     )
                         .chain()
                         .in_set(PhysicsUpdateStep::SyncToPhysicsWorld),
@@ -265,6 +274,30 @@ fn create_weld_joints(
     }
 }
 
+fn create_joints<T: Component + ToJointPtr>(
+    mut b2_world: ResMut<b2World>,
+    mut added: Query<(Entity, &b2Joint, &T), Added<T>>,
+    mut bodies: Query<(Entity, &mut b2Body)>,
+) {
+    for (joint_entity, joint, revolute_joint) in added.iter_mut() {
+        let [mut body_a, mut body_b] = bodies
+            .get_many_mut([*joint.body_a(), *joint.body_b()])
+            .unwrap();
+        let mut b2_world_impl = b2_world.inner();
+        let joint_ptr = revolute_joint.create_ffi_joint(
+            b2_world_impl.borrow_mut(),
+            body_a.0,
+            body_b.0,
+            joint.collide_connected(),
+        );
+        b2_world_impl.register_joint(
+            (joint_entity, &joint, joint_ptr),
+            (body_a.0, &mut body_a.1),
+            (body_b.0, &mut body_b.1),
+        );
+    }
+}
+
 fn create_particle_systems(
     mut commands: Commands,
     mut b2_world: ResMut<b2World>,
@@ -409,6 +442,17 @@ fn sync_weld_joints_to_world(
         if let JointPtr::Weld(joint_ptr) = joint_ptr {
             joint.sync_to_world(*joint_ptr);
         }
+    }
+}
+
+fn sync_joints_to_world<T: Component + SyncJointToWorld>(
+    mut b2_world: ResMut<b2World>,
+    joints: Query<(Entity, &T), Changed<T>>,
+) {
+    let mut b2_world_impl = b2_world.inner();
+    for (entity, joint) in joints.iter() {
+        let joint_ptr = b2_world_impl.joint_ptr_mut(&entity).unwrap();
+        joint.sync_to_world(joint_ptr);
     }
 }
 

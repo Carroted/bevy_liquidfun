@@ -17,6 +17,9 @@ pub mod dynamics {
         mod distance_joint;
         pub use distance_joint::*;
 
+        mod motor_joint;
+        pub use motor_joint::*;
+
         mod prismatic_joint;
         pub use prismatic_joint::*;
 

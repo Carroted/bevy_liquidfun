@@ -11,7 +11,7 @@ use rand::prelude::*;
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{
-        b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2CategoryFilter, b2Filter, b2Fixture,
+        b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2RayCastFilter, b2Filter, b2Fixture,
         b2FixtureDef, b2RayCastAll, b2RayCastAny, b2RayCastClosest, b2World,
     },
     plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
@@ -236,7 +236,7 @@ fn cast_ray(
     let ray_end = ray_start + Vec2::new(RAY_LENGTH * f32::cos(angle), RAY_LENGTH * f32::sin(angle));
     gizmos.line_2d(ray_start, ray_end, Color::WHITE);
 
-    let filter = b2CategoryFilter::new(!2u16);
+    let filter = b2RayCastFilter::allow_categories(!2u16);
     match mode.as_ref() {
         RayCastMode::Closest => {
             let callback = b2RayCastClosest::new();

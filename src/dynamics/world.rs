@@ -11,7 +11,7 @@ use libliquidfun_sys::box2d::ffi::{b2ContactListenerWrapper, b2RayCastCallbackWr
 use libliquidfun_sys::box2d::*;
 
 use crate::dynamics::{
-    b2Body, b2ContactListener, b2Fixture, b2Joint, b2NoOpFilter, b2RayCast, b2RayCastCallback,
+    b2Body, b2ContactListener, b2Fixture, b2Joint, b2RayCast, b2RayCastCallback,
     b2RayCastFilter, JointPtr,
 };
 use crate::internal::*;
@@ -64,13 +64,13 @@ impl b2World {
         start: &Vec2,
         end: &Vec2,
     ) -> T::Result {
-        return self.ray_cast_with_filter(callback, b2NoOpFilter::default(), start, end);
+        return self.ray_cast_with_filter(callback, b2RayCastFilter::default(), start, end);
     }
 
-    pub fn ray_cast_with_filter<T: b2RayCastCallback + 'static, F: b2RayCastFilter + 'static>(
+    pub fn ray_cast_with_filter<T: b2RayCastCallback + 'static>(
         &mut self,
         callback: T,
-        filter: F,
+        filter: b2RayCastFilter,
         start: &Vec2,
         end: &Vec2,
     ) -> T::Result {

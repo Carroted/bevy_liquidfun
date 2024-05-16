@@ -1,8 +1,8 @@
+use std::collections::HashSet;
 use std::fmt::Debug;
 use std::pin::Pin;
 
 use bevy::prelude::*;
-use bevy::utils::HashSet;
 
 use libliquidfun_sys::box2d::ffi::b2Body as ffi_b2Body;
 use libliquidfun_sys::box2d::ffi::b2Fixture as ffi_b2Fixture;
@@ -12,13 +12,13 @@ use crate::internal::to_Vec2;
 
 #[derive(Debug)]
 #[allow(non_camel_case_types)]
-pub(crate) struct b2RayCast<T: b2RayCastCallback, F: b2RayCastFilter> {
+pub(crate) struct b2RayCast<T: b2RayCastCallback> {
     callback: T,
-    filter: F,
+    filter: b2RayCastFilter,
 }
 
-impl<T: b2RayCastCallback, F: b2RayCastFilter> b2RayCast<T, F> {
-    pub fn new(callback: T, filter: F) -> Self {
+impl<T: b2RayCastCallback> b2RayCast<T> {
+    pub fn new(callback: T, filter: b2RayCastFilter) -> Self {
         Self { callback, filter }
     }
 
@@ -28,7 +28,7 @@ impl<T: b2RayCastCallback, F: b2RayCastFilter> b2RayCast<T, F> {
 }
 
 #[allow(unused_variables)]
-impl<T: b2RayCastCallback, F: b2RayCastFilter> b2RayCastCallbackImpl for b2RayCast<T, F> {
+impl<T: b2RayCastCallback> b2RayCastCallbackImpl for b2RayCast<T> {
     fn report_fixture(
         &mut self,
         fixture: &mut ffi_b2Fixture,
@@ -215,104 +215,75 @@ pub struct b2RayCastHit {
     pub normal: Vec2,
 }
 
+#[derive(Debug, Default, Clone)]
 #[allow(non_camel_case_types)]
-pub trait b2RayCastFilter: Debug {
+pub struct b2RayCastFilter {
+    excluded_bodies: Option<HashSet<Entity>>,
+    allowed_categories: Option<u16>,
+}
+
+impl b2RayCastFilter {
+    pub fn filter_body(body: Entity) -> Self {
+        Self::default().add_body(body)
+    }
+
+    pub fn filter_bodies<T>(bodies: T) -> Self
+    where
+        T: IntoIterator<Item = Entity>,
+    {
+        Self::default().add_bodies(bodies)
+    }
+
+    pub fn allow_categories<T: Into<u16>>(allowed_categories: T) -> Self {
+        Self::default().add_allowed_categories(allowed_categories)
+    }
+    
+    pub fn add_body(mut self, body: Entity) -> Self {
+        self.excluded_bodies
+            .get_or_insert_with(HashSet::default)
+            .insert(body);
+        self
+    }
+
+    pub fn add_bodies<T>(mut self, bodies: T) -> Self
+    where
+        T: IntoIterator<Item = Entity>,
+    {
+        self.excluded_bodies
+            .get_or_insert_with(HashSet::default)
+            .extend(bodies.into_iter());
+        self
+    }
+
+    pub fn add_allowed_categories<T: Into<u16>>(mut self, allowed_categories: T) -> Self {
+        self.allowed_categories = Some(match self.allowed_categories {
+            Some(current) => current | allowed_categories.into(),
+            None => allowed_categories.into(),
+        });
+
+        self
+    }
+
     fn should_use(
         &self,
         body_entity: Entity,
-        body: Pin<&mut ffi_b2Body>,
-        fixture_entity: Entity,
+        _body: Pin<&mut ffi_b2Body>,
+        _fixture_entity: Entity,
         fixture: Pin<&mut ffi_b2Fixture>,
-    ) -> bool;
-}
-
-#[derive(Debug, Default)]
-#[allow(non_camel_case_types)]
-pub struct b2NoOpFilter {}
-
-impl b2RayCastFilter for b2NoOpFilter {
-    fn should_use(
-        &self,
-        _body_entity: Entity,
-        _body: Pin<&mut ffi_b2Body>,
-        _fixture_entity: Entity,
-        _fixture: Pin<&mut ffi_b2Fixture>,
     ) -> bool {
-        true
-    }
-}
-
-#[derive(Debug)]
-#[allow(non_camel_case_types)]
-pub struct b2ExcludeBodyFilter {
-    excluded_body: Entity,
-}
-
-impl b2ExcludeBodyFilter {
-    pub fn new(excluded_body: Entity) -> Self {
-        Self { excluded_body }
-    }
-}
-
-impl b2RayCastFilter for b2ExcludeBodyFilter {
-    fn should_use(
-        &self,
-        body_entity: Entity,
-        _body: Pin<&mut ffi_b2Body>,
-        _fixture_entity: Entity,
-        _fixture: Pin<&mut ffi_b2Fixture>,
-    ) -> bool {
-        return body_entity != self.excluded_body;
-    }
-}
-#[derive(Debug)]
-#[allow(non_camel_case_types)]
-pub struct b2ExcludeBodiesFilter {
-    excluded_bodies: HashSet<Entity>,
-}
-
-impl b2ExcludeBodiesFilter {
-    pub fn new(excluded_bodies: &HashSet<Entity>) -> Self {
-        let excluded_bodies = excluded_bodies.iter().copied().collect();
-        Self { excluded_bodies }
-    }
-}
-
-impl b2RayCastFilter for b2ExcludeBodiesFilter {
-    fn should_use(
-        &self,
-        body_entity: Entity,
-        _body: Pin<&mut ffi_b2Body>,
-        _fixture_entity: Entity,
-        _fixture: Pin<&mut ffi_b2Fixture>,
-    ) -> bool {
-        return !self.excluded_bodies.contains(&body_entity);
-    }
-}
-
-#[derive(Debug)]
-#[allow(non_camel_case_types)]
-pub struct b2CategoryFilter {
-    allowed_categories: u16,
-}
-
-impl b2CategoryFilter {
-    pub fn new<T: Into<u16>>(allowed_categories: T) -> Self {
-        Self {
-            allowed_categories: allowed_categories.into(),
+        if let Some(excluded_bodies) = &self.excluded_bodies {
+            if excluded_bodies.contains(&body_entity) {
+                return false;
+            }
         }
-    }
-}
 
-impl b2RayCastFilter for b2CategoryFilter {
-    fn should_use(
-        &self,
-        _body_entity: Entity,
-        _body: Pin<&mut ffi_b2Body>,
-        _fixture_entity: Entity,
-        fixture: Pin<&mut ffi_b2Fixture>,
-    ) -> bool {
-        let filter = fixture.GetFilterData();
-        return self.allowed_categories & u16::from(filter.categoryBits) != 0;
+        if let Some(allowed_categories) = self.allowed_categories {
+            let filter_data = fixture.GetFilterData();
+            if allowed_categories & u16::from(filter_data.categoryBits) == 0 {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

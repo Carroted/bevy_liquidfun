@@ -1,13 +1,15 @@
 use std::pin::Pin;
 
-use bevy::math::Vec2;
-use bevy::prelude::{Component, Entity};
+use bevy::{
+    math::Vec2,
+    prelude::{Component, Entity},
+};
+use libliquidfun_sys::box2d::{ffi, ffi::int32};
 
-use libliquidfun_sys::box2d::ffi;
-use libliquidfun_sys::box2d::ffi::int32;
-
-use crate::dynamics::{b2ParticleBodyContact, b2WorldImpl};
-use crate::particles::b2ParticleDef;
+use crate::{
+    dynamics::{b2ParticleBodyContact, b2WorldImpl},
+    particles::b2ParticleDef,
+};
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone)]

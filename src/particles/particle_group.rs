@@ -1,11 +1,12 @@
-use crate::collision::b2Shape;
-use crate::internal::to_b2Vec2;
-use crate::particles::particle::b2ParticleFlags;
-use bevy::math::Vec2;
-use bevy::prelude::{Component, Entity};
-use libliquidfun_sys::box2d::ffi;
-use libliquidfun_sys::box2d::ffi::uint32;
 use std::os::raw::c_uint;
+
+use bevy::{
+    math::Vec2,
+    prelude::{Component, Entity},
+};
+use libliquidfun_sys::box2d::{ffi, ffi::uint32};
+
+use crate::{collision::b2Shape, internal::to_b2Vec2, particles::particle::b2ParticleFlags};
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone)]

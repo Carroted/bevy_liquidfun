@@ -2,12 +2,15 @@ extern crate bevy;
 extern crate bevy_liquidfun;
 
 use bevy::prelude::*;
-
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2FixtureDef, b2World},
     particles::{
-        b2ParticleFlags, b2ParticleGroup, b2ParticleGroupDef, b2ParticleSystem, b2ParticleSystemDef,
+        b2ParticleFlags,
+        b2ParticleGroup,
+        b2ParticleGroupDef,
+        b2ParticleSystem,
+        b2ParticleSystemDef,
     },
     plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
     utils::{DebugDrawFixtures, DebugDrawParticleSystem},

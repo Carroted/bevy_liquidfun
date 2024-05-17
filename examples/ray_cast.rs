@@ -4,19 +4,26 @@ extern crate rand;
 
 use std::f32::consts::PI;
 
-use bevy::input::prelude::*;
-use bevy::prelude::*;
-use rand::prelude::*;
-
+use bevy::{input::prelude::*, prelude::*};
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{
-        b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2RayCastFilter, b2Filter, b2Fixture,
-        b2FixtureDef, b2RayCastAll, b2RayCastAny, b2RayCastClosest, b2World,
+        b2BodyBundle,
+        b2BodyDef,
+        b2BodyType::Dynamic,
+        b2Filter,
+        b2Fixture,
+        b2FixtureDef,
+        b2RayCastAll,
+        b2RayCastAny,
+        b2RayCastClosest,
+        b2RayCastFilter,
+        b2World,
     },
     plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
     utils::DebugDrawFixtures,
 };
+use rand::prelude::*;
 
 #[derive(Resource)]
 struct ShapeCollection {
@@ -117,8 +124,10 @@ fn setup_instructions(mut commands: Commands) {
 fn update_instructions(mode: Res<RayCastMode>, mut text: Query<&mut Text>) {
     if mode.is_added() || mode.is_changed() {
         let mut text = text.single_mut();
-        let instruction_text =
-            format!("'1-5' Spawn a new body\n'd' Delete a body\n'r' Change ray cast mode\nCurrent mode: {:?}", mode.as_ref());
+        let instruction_text = format!(
+            "'1-5' Spawn a new body\n'd' Delete a body\n'r' Change ray cast mode\nCurrent mode: {:?}",
+            mode.as_ref()
+        );
         *text = Text::from_section(
             instruction_text,
             TextStyle {

@@ -1,21 +1,32 @@
-use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
-use std::pin::Pin;
-use std::rc::Rc;
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::{
+    cell::RefCell,
+    collections::{HashMap, HashSet},
+    pin::Pin,
+    rc::Rc,
+    sync::{Arc, Mutex, MutexGuard},
+};
 
 use autocxx::WithinBox;
 use bevy::prelude::*;
-
-use libliquidfun_sys::box2d::ffi::{b2ContactListenerWrapper, b2RayCastCallbackWrapper, int32};
-use libliquidfun_sys::box2d::*;
-
-use crate::dynamics::{
-    b2Body, b2ContactListener, b2Fixture, b2Joint, b2RayCast, b2RayCastCallback,
-    b2RayCastFilter, JointPtr,
+use libliquidfun_sys::box2d::{
+    ffi::{b2ContactListenerWrapper, b2RayCastCallbackWrapper, int32},
+    *,
 };
-use crate::internal::*;
-use crate::particles::{b2ParticleGroup, b2ParticleSystem};
+
+use crate::{
+    dynamics::{
+        b2Body,
+        b2ContactListener,
+        b2Fixture,
+        b2Joint,
+        b2RayCast,
+        b2RayCastCallback,
+        b2RayCastFilter,
+        JointPtr,
+    },
+    internal::*,
+    particles::{b2ParticleGroup, b2ParticleSystem},
+};
 
 #[allow(non_camel_case_types)]
 #[derive(Resource, Clone, Reflect)]

@@ -1,9 +1,13 @@
-use crate::internal::to_b2Vec2;
+use std::ffi::c_void;
+
 use bevy::math::Vec2;
 use bitflags::bitflags;
-use libliquidfun_sys::box2d::ffi;
-use libliquidfun_sys::box2d::ffi::{b2ParticleColor, uint32, uint8};
-use std::ffi::c_void;
+use libliquidfun_sys::box2d::{
+    ffi,
+    ffi::{b2ParticleColor, uint32, uint8},
+};
+
+use crate::internal::to_b2Vec2;
 
 bitflags! {
     #[allow(non_camel_case_types)]

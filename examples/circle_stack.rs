@@ -2,7 +2,6 @@ extern crate bevy;
 extern crate bevy_liquidfun;
 
 use bevy::prelude::*;
-
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2FixtureDef, b2World},

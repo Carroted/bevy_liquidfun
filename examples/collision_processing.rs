@@ -5,18 +5,23 @@ extern crate rand;
 use std::ops::RangeInclusive;
 
 use bevy::prelude::*;
-use rand::prelude::*;
-
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{
-        b2BeginContactEvent, b2Body, b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2Fixture,
-        b2FixtureDef, b2World,
+        b2BeginContactEvent,
+        b2Body,
+        b2BodyBundle,
+        b2BodyDef,
+        b2BodyType::Dynamic,
+        b2Fixture,
+        b2FixtureDef,
+        b2World,
     },
     plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
     schedule::{PhysicsSchedule, PhysicsUpdateStep},
     utils::DebugDrawFixtures,
 };
+use rand::prelude::*;
 
 fn main() {
     App::new()

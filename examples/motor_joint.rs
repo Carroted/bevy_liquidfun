@@ -2,11 +2,22 @@ extern crate bevy;
 extern crate bevy_liquidfun;
 
 use bevy::prelude::*;
-
 use bevy_liquidfun::{
-    collision::b2Shape, dynamics::{
-        b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2FixtureDef, b2MotorJoint, b2MotorJointDef, b2World, CreateMotorJoint
-    }, plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin}, schedule::PhysicsSchedule, utils::DebugDrawFixtures
+    collision::b2Shape,
+    dynamics::{
+        b2BodyBundle,
+        b2BodyDef,
+        b2BodyType::Dynamic,
+        b2Fixture,
+        b2FixtureDef,
+        b2MotorJoint,
+        b2MotorJointDef,
+        b2World,
+        CreateMotorJoint,
+    },
+    plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
+    schedule::PhysicsSchedule,
+    utils::DebugDrawFixtures,
 };
 
 #[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
@@ -27,7 +38,10 @@ fn main() {
         .add_systems(Startup, (setup_camera, setup_instructions))
         .add_systems(Startup, (setup_physics_world, setup_physics_bodies).chain())
         .add_systems(Update, toggle_state)
-        .add_systems(PhysicsSchedule, update_motor_offsets.run_if(in_state(RunState::Playing)))
+        .add_systems(
+            PhysicsSchedule,
+            update_motor_offsets.run_if(in_state(RunState::Playing)),
+        )
         .run();
 }
 
@@ -144,7 +158,11 @@ fn toggle_state(
 #[derive(Default)]
 struct SimulationTime(f32);
 
-fn update_motor_offsets(mut motor_joint: Query<&mut b2MotorJoint>, time: Res<Time>, mut simulation_time: Local<SimulationTime>) {
+fn update_motor_offsets(
+    mut motor_joint: Query<&mut b2MotorJoint>,
+    time: Res<Time>,
+    mut simulation_time: Local<SimulationTime>,
+) {
     simulation_time.0 += time.delta_seconds();
 
     let time = simulation_time.0;

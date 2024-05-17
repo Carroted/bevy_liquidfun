@@ -1,10 +1,16 @@
-use crate::collision::b2Shape;
-use autocxx::WithinBox;
-use bevy::prelude::{Component, Entity};
-use bevy::utils::default;
-use libliquidfun_sys::box2d::ffi;
-use libliquidfun_sys::box2d::ffi::{int16, uint16};
 use std::pin::Pin;
+
+use autocxx::WithinBox;
+use bevy::{
+    prelude::{Component, Entity},
+    utils::default,
+};
+use libliquidfun_sys::box2d::{
+    ffi,
+    ffi::{int16, uint16},
+};
+
+use crate::collision::b2Shape;
 
 #[allow(non_camel_case_types)]
 #[derive(Component, Debug)]

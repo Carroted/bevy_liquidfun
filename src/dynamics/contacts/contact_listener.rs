@@ -1,10 +1,15 @@
 use std::collections::{HashMap, HashSet};
 
 use bevy::prelude::Entity;
-
 use libliquidfun_sys::box2d::ffi::{
-    b2Contact as ffi_b2Contact, b2ContactImpulse, b2ContactListenerImpl, b2Fixture, b2Manifold,
-    b2ParticleBodyContact as ffi_b2ParticleBodyContact, b2ParticleContact, b2ParticleSystem,
+    b2Contact as ffi_b2Contact,
+    b2ContactImpulse,
+    b2ContactListenerImpl,
+    b2Fixture,
+    b2Manifold,
+    b2ParticleBodyContact as ffi_b2ParticleBodyContact,
+    b2ParticleContact,
+    b2ParticleSystem,
 };
 
 use crate::dynamics::b2Contact;

@@ -4,16 +4,14 @@ extern crate rand;
 
 use std::f32::consts::PI;
 
-use bevy::input::prelude::*;
-use bevy::prelude::*;
-use rand::prelude::*;
-
+use bevy::{input::prelude::*, prelude::*};
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2FixtureDef, b2World},
     plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
     utils::DebugDrawFixtures,
 };
+use rand::prelude::*;
 
 #[derive(Resource)]
 struct ShapeCollection {

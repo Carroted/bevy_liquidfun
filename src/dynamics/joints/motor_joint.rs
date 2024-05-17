@@ -1,11 +1,13 @@
-use crate::dynamics::{b2Joint, b2JointType, b2WorldImpl, JointPtr};
-use crate::internal::to_b2Vec2;
-use bevy::ecs::system::EntityCommand;
-use bevy::prelude::*;
-use libliquidfun_sys::box2d::ffi;
 use std::pin::Pin;
 
+use bevy::{ecs::system::EntityCommand, prelude::*};
+use libliquidfun_sys::box2d::ffi;
+
 use super::{SyncJointToWorld, ToJointPtr};
+use crate::{
+    dynamics::{b2Joint, b2JointType, b2WorldImpl, JointPtr},
+    internal::to_b2Vec2,
+};
 
 #[allow(non_camel_case_types)]
 #[derive(Component, Debug, Reflect)]
@@ -41,7 +43,9 @@ impl b2MotorJoint {
 
 impl SyncJointToWorld for b2MotorJoint {
     fn sync_to_world(&self, joint_ptr: &mut JointPtr) {
-        let JointPtr::Motor(joint_ptr) = joint_ptr else { panic!("Expected joint of type b2MotorJoint") };
+        let JointPtr::Motor(joint_ptr) = joint_ptr else {
+            panic!("Expected joint of type b2MotorJoint")
+        };
         let mut joint_ptr = unsafe { Pin::new_unchecked(joint_ptr.as_mut().unwrap()) };
         joint_ptr
             .as_mut()

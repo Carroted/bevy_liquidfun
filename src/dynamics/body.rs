@@ -1,11 +1,13 @@
-use bevy::prelude::*;
-use bevy::utils::hashbrown::HashSet;
+use bevy::{prelude::*, utils::hashbrown::HashSet};
+use libliquidfun_sys::box2d::{
+    ffi,
+    ffi::b2BodyType::{b2_dynamicBody, b2_kinematicBody, b2_staticBody},
+};
 
-use libliquidfun_sys::box2d::ffi;
-use libliquidfun_sys::box2d::ffi::b2BodyType::{b2_dynamicBody, b2_kinematicBody, b2_staticBody};
-
-use crate::dynamics::b2WorldImpl;
-use crate::internal::{to_Vec2, to_b2Vec2};
+use crate::{
+    dynamics::b2WorldImpl,
+    internal::{to_Vec2, to_b2Vec2},
+};
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Default, Copy, Clone)]

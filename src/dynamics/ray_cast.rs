@@ -1,12 +1,13 @@
-use std::collections::HashSet;
-use std::fmt::Debug;
-use std::pin::Pin;
+use std::{collections::HashSet, fmt::Debug, pin::Pin};
 
 use bevy::prelude::*;
-
-use libliquidfun_sys::box2d::ffi::b2Body as ffi_b2Body;
-use libliquidfun_sys::box2d::ffi::b2Fixture as ffi_b2Fixture;
-use libliquidfun_sys::box2d::ffi::{b2ParticleSystem, b2RayCastCallbackImpl, b2Vec2};
+use libliquidfun_sys::box2d::ffi::{
+    b2Body as ffi_b2Body,
+    b2Fixture as ffi_b2Fixture,
+    b2ParticleSystem,
+    b2RayCastCallbackImpl,
+    b2Vec2,
+};
 
 use crate::internal::to_Vec2;
 
@@ -237,7 +238,7 @@ impl b2RayCastFilter {
     pub fn allow_categories<T: Into<u16>>(allowed_categories: T) -> Self {
         Self::default().add_allowed_categories(allowed_categories)
     }
-    
+
     pub fn add_body(mut self, body: Entity) -> Self {
         self.excluded_bodies
             .get_or_insert_with(HashSet::default)

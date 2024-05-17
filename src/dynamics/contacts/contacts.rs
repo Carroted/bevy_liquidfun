@@ -1,12 +1,14 @@
-use std::collections::HashSet;
-use std::pin::Pin;
+use std::{collections::HashSet, pin::Pin};
 
 use autocxx::WithinBox;
-use bevy::math::Vec2;
-use bevy::prelude::{Component, Entity, Resource};
-
+use bevy::{
+    math::Vec2,
+    prelude::{Component, Entity, Resource},
+};
 use libliquidfun_sys::box2d::ffi::{
-    b2Contact as ffi_b2Contact, b2ParticleBodyContact as ffi_b2ParticleBodyContact, b2WorldManifold,
+    b2Contact as ffi_b2Contact,
+    b2ParticleBodyContact as ffi_b2ParticleBodyContact,
+    b2WorldManifold,
 };
 
 use crate::internal::to_Vec2;

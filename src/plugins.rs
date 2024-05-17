@@ -1,30 +1,46 @@
-use std::borrow::BorrowMut;
-use std::ops::Deref;
-use std::pin::Pin;
+use std::{borrow::BorrowMut, ops::Deref, pin::Pin};
 
-use bevy::prelude::*;
-use bevy::transform::TransformSystem;
-
+use bevy::{prelude::*, transform::TransformSystem};
 use libliquidfun_sys::box2d::ffi::int32;
 
-use crate::collision::b2Shape;
-use crate::dynamics::b2DistanceJoint;
-use crate::dynamics::b2MotorJoint;
-use crate::dynamics::b2WeldJoint;
-use crate::dynamics::SyncJointToWorld;
-use crate::dynamics::ToJointPtr;
-use crate::particles::{b2ParticleGroup, b2ParticleSystem, b2ParticleSystemContacts};
-use crate::schedule::{LiquidFunSchedulePlugin, PhysicsTimeAccumulator, PhysicsUpdateStep};
-use crate::schedule::{PhysicsSchedule, PhysicsUpdate};
-use crate::utils::{DebugDrawFixtures, DebugDrawParticleSystem};
 use crate::{
+    collision::b2Shape,
     dynamics::{
-        b2BeginContactEvent, b2BodiesInContact, b2Body, b2Contact, b2Contacts, b2EndContactEvent,
-        b2Fixture, b2FixturesInContact, b2Joint, b2ParticleBodyContact, b2ParticlesInContact,
-        b2PrismaticJoint, b2RevoluteJoint, b2World, b2WorldSettings, ExternalForce,
-        ExternalImpulse, ExternalTorque, GravityScale,
+        b2BeginContactEvent,
+        b2BodiesInContact,
+        b2Body,
+        b2Contact,
+        b2Contacts,
+        b2DistanceJoint,
+        b2EndContactEvent,
+        b2Fixture,
+        b2FixturesInContact,
+        b2Joint,
+        b2MotorJoint,
+        b2ParticleBodyContact,
+        b2ParticlesInContact,
+        b2PrismaticJoint,
+        b2RevoluteJoint,
+        b2WeldJoint,
+        b2World,
+        b2WorldSettings,
+        ExternalForce,
+        ExternalImpulse,
+        ExternalTorque,
+        GravityScale,
+        SyncJointToWorld,
+        ToJointPtr,
     },
     internal::to_b2Vec2,
+    particles::{b2ParticleGroup, b2ParticleSystem, b2ParticleSystemContacts},
+    schedule::{
+        LiquidFunSchedulePlugin,
+        PhysicsSchedule,
+        PhysicsTimeAccumulator,
+        PhysicsUpdate,
+        PhysicsUpdateStep,
+    },
+    utils::{DebugDrawFixtures, DebugDrawParticleSystem},
 };
 
 #[derive(Default)]
@@ -66,12 +82,13 @@ impl Plugin for LiquidFunPlugin {
                         create_bodies,
                         create_fixtures,
                         (
-                        create_joints::<b2DistanceJoint>,
-                        create_joints::<b2MotorJoint>,
-                        create_joints::<b2PrismaticJoint>,
-                        create_joints::<b2RevoluteJoint>,
-                        create_joints::<b2WeldJoint>,
-                        ).chain(),
+                            create_joints::<b2DistanceJoint>,
+                            create_joints::<b2MotorJoint>,
+                            create_joints::<b2PrismaticJoint>,
+                            create_joints::<b2RevoluteJoint>,
+                            create_joints::<b2WeldJoint>,
+                        )
+                            .chain(),
                         create_particle_systems,
                         create_particle_groups,
                         create_queued_particles,
@@ -82,12 +99,13 @@ impl Plugin for LiquidFunPlugin {
                         apply_deferred,
                         sync_bodies_to_world,
                         (
-                        sync_joints_to_world::<b2DistanceJoint>,
-                        sync_joints_to_world::<b2MotorJoint>,
-                        sync_joints_to_world::<b2PrismaticJoint>,
-                        sync_joints_to_world::<b2RevoluteJoint>,
-                        sync_joints_to_world::<b2WeldJoint>,
-                        ).chain()
+                            sync_joints_to_world::<b2DistanceJoint>,
+                            sync_joints_to_world::<b2MotorJoint>,
+                            sync_joints_to_world::<b2PrismaticJoint>,
+                            sync_joints_to_world::<b2RevoluteJoint>,
+                            sync_joints_to_world::<b2WeldJoint>,
+                        )
+                            .chain(),
                     )
                         .chain()
                         .in_set(PhysicsUpdateStep::SyncToPhysicsWorld),
@@ -260,10 +278,7 @@ fn destroy_removed_bodies(
     }
 }
 
-fn destroy_removed_joints(
-    mut b2_world: ResMut<b2World>,
-    mut removed: RemovedComponents<b2Joint>,
-) {
+fn destroy_removed_joints(mut b2_world: ResMut<b2World>, mut removed: RemovedComponents<b2Joint>) {
     let mut b2_world_impl = b2_world.inner();
     for entity in removed.read() {
         b2_world_impl.destroy_joint(entity);

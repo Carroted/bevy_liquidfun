@@ -1,8 +1,8 @@
+use std::f32::consts::PI;
+
 use autocxx::WithinUniquePtr;
 use bevy::prelude::*;
-use libliquidfun_sys::box2d::ffi::b2Vec2;
-use libliquidfun_sys::box2d::*;
-use std::f32::consts::PI;
+use libliquidfun_sys::box2d::{ffi::b2Vec2, *};
 
 use crate::internal::*;
 

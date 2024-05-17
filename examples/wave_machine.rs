@@ -4,15 +4,27 @@ extern crate bevy_liquidfun;
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
-
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{
-        b2Body, b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2FixtureDef, b2Joint,
-        b2RevoluteJoint, b2RevoluteJointDef, b2World, CreateRevoluteJoint,
+        b2Body,
+        b2BodyBundle,
+        b2BodyDef,
+        b2BodyType::Dynamic,
+        b2Fixture,
+        b2FixtureDef,
+        b2Joint,
+        b2RevoluteJoint,
+        b2RevoluteJointDef,
+        b2World,
+        CreateRevoluteJoint,
     },
     particles::{
-        b2ParticleFlags, b2ParticleGroup, b2ParticleGroupDef, b2ParticleSystem, b2ParticleSystemDef,
+        b2ParticleFlags,
+        b2ParticleGroup,
+        b2ParticleGroupDef,
+        b2ParticleSystem,
+        b2ParticleSystemDef,
     },
     plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
     utils::{DebugDrawFixtures, DebugDrawParticleSystem},

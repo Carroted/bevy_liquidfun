@@ -1,14 +1,13 @@
 use std::pin::Pin;
 
-use bevy::ecs::system::EntityCommand;
-use bevy::math::Vec2;
-use bevy::prelude::*;
+use bevy::{ecs::system::EntityCommand, math::Vec2, prelude::*};
 use libliquidfun_sys::box2d::ffi;
 
-use crate::dynamics::{b2Joint, b2JointType, b2WorldImpl, JointPtr};
-use crate::internal::to_b2Vec2;
-
 use super::{SyncJointToWorld, ToJointPtr};
+use crate::{
+    dynamics::{b2Joint, b2JointType, b2WorldImpl, JointPtr},
+    internal::to_b2Vec2,
+};
 
 #[allow(non_camel_case_types)]
 #[derive(Component, Debug, Reflect)]

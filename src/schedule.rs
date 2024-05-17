@@ -1,8 +1,6 @@
 use std::time::Duration;
 
-use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::*;
-use bevy::transform::TransformSystem;
+use bevy::{ecs::schedule::ScheduleLabel, prelude::*, transform::TransformSystem};
 
 use crate::dynamics::b2WorldSettings;
 

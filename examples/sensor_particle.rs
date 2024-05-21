@@ -2,7 +2,6 @@ extern crate bevy;
 extern crate bevy_liquidfun;
 
 use bevy::prelude::*;
-
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{b2BodyBundle, b2BodyDef, b2Fixture, b2FixtureDef, b2ParticlesInContact, b2World},
@@ -136,7 +135,7 @@ fn apply_force(
             let center = Vec2::new(0.0, 10.0);
             let direction = (center - *position).normalize();
 
-            particle_system.particle_apply_force(*index, 0.050 * direction);
+            particle_system.particle_apply_force(*index, 0.05 * direction);
         }
     }
 }

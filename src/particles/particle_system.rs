@@ -4,10 +4,14 @@ use bevy::{
     math::Vec2,
     prelude::{Component, Entity},
 };
-use libliquidfun_sys::box2d::{ffi, ffi::int32};
+use libliquidfun_sys::box2d::{
+    ffi,
+    ffi::{b2Vec2, int32},
+};
 
 use crate::{
     dynamics::{b2ParticleBodyContact, b2WorldImpl},
+    internal::to_b2Vec2,
     particles::b2ParticleDef,
 };
 
@@ -100,6 +104,8 @@ impl b2ParticleSystemDef {
 #[derive(Component, Debug)]
 pub struct b2ParticleSystem {
     positions: Vec<Vec2>,
+    velocities: Vec<Vec2>,
+    forces: Vec<Vec2>,
     definition: b2ParticleSystemDef,
     creation_queue: Vec<b2ParticleDef>,
     destruction_queue: Vec<i32>,
@@ -109,6 +115,8 @@ impl b2ParticleSystem {
     pub fn new(def: &b2ParticleSystemDef) -> b2ParticleSystem {
         b2ParticleSystem {
             positions: Vec::with_capacity(def.max_count as usize),
+            velocities: Vec::with_capacity(def.max_count as usize),
+            forces: Vec::with_capacity(def.max_count as usize),
             definition: def.clone(),
             creation_queue: Vec::new(),
             destruction_queue: Vec::new(),
@@ -126,6 +134,13 @@ impl b2ParticleSystem {
         return &self.positions;
     }
 
+    pub(crate) fn get_velocities_mut(&mut self) -> &mut Vec<Vec2> {
+        &mut self.velocities
+    }
+    pub fn get_velocities(&self) -> &Vec<Vec2> {
+        return &self.velocities;
+    }
+
     pub fn queue_particle_for_creation(&mut self, def: &b2ParticleDef) {
         self.creation_queue.push(def.clone());
     }
@@ -134,12 +149,18 @@ impl b2ParticleSystem {
         self.destruction_queue.push(particle_index);
     }
 
+    pub fn particle_apply_force(&mut self, index: i32, force: Vec2) {
+        self.forces[index as usize] += force;
+    }
+
     pub(crate) fn sync_with_world(&mut self, entity: Entity, b2_world: &b2WorldImpl) {
         let particle_system_ptr = b2_world.particle_system_ptr(entity).unwrap();
         let particle_count = particle_system_ptr.as_ref().GetParticleCount();
         let particle_count = i32::from(particle_count) as usize;
         unsafe {
             self.positions.set_len(particle_count);
+            self.velocities.set_len(particle_count);
+            self.forces.set_len(particle_count);
         }
     }
 
@@ -167,6 +188,20 @@ impl b2ParticleSystem {
         }
 
         self.destruction_queue.clear();
+    }
+
+    pub(crate) fn apply_particle_forces(
+        &mut self,
+        mut ffi_particle_system: Pin<&mut ffi::b2ParticleSystem>,
+    ) {
+        for (particle, force) in self.forces.iter().enumerate() {
+            ffi_particle_system.as_mut().ParticleApplyForce(
+                int32::from(particle as i32),
+                &b2Vec2::from(to_b2Vec2(force)),
+            );
+        }
+
+        self.forces.iter_mut().for_each(|f| *f = Vec2::ZERO);
     }
 }
 

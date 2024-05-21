@@ -315,6 +315,13 @@ impl b2WorldImpl {
             ffi_particle_system
                 .as_mut()
                 .SetPositionBuffer(positions.as_mut_ptr() as *mut ffi::b2Vec2, capacity);
+
+            let velocities = particle_system.get_velocities_mut();
+            let capacity = i32::try_from(velocities.capacity()).unwrap();
+            let capacity: int32 = int32::from(capacity);
+            ffi_particle_system
+                .as_mut()
+                .SetVelocityBuffer(velocities.as_mut_ptr() as *mut ffi::b2Vec2, capacity);
             self.particle_system_ptrs
                 .insert(entity, ffi_particle_system_ptr);
         }

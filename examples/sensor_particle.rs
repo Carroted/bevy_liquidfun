@@ -17,9 +17,6 @@ use bevy_liquidfun::{
     utils::{DebugDrawFixtures, DebugDrawParticleSystem},
 };
 
-#[derive(Component)]
-pub struct Sensor;
-
 fn main() {
     App::new()
         .add_plugins((
@@ -74,12 +71,7 @@ fn setup(mut commands: Commands) {
             position: Vec2::new(0.0, 10.0),
             ..default()
         };
-        let body_entity = commands
-            .spawn((
-                b2BodyBundle::new(&b2body_def),
-                b2ParticlesInContact::default(),
-            ))
-            .id();
+        let body_entity = commands.spawn((b2BodyBundle::new(&b2body_def),)).id();
 
         let shape = b2Shape::Circle {
             radius: 5.0,
@@ -94,7 +86,7 @@ fn setup(mut commands: Commands) {
         commands.spawn((
             b2Fixture::new(body_entity, &fixture_def),
             DebugDrawFixtures::default_static(),
-            Sensor,
+            b2ParticlesInContact::default(),
         ))
     };
 }

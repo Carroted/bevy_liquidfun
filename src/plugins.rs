@@ -558,7 +558,7 @@ fn update_bodies_in_contact_components(
 }
 
 fn update_particle_body_contacts_components(
-    mut particle_contact_components: Query<(Entity, &mut b2ParticlesInContact), With<b2Body>>,
+    mut particle_contact_components: Query<(Entity, &mut b2ParticlesInContact)>,
     particle_system_contacts: Query<&b2ParticleSystemContacts>,
 ) {
     for (_, mut particle_contact_component) in &mut particle_contact_components {
@@ -568,7 +568,7 @@ fn update_particle_body_contacts_components(
     for particle_system in &particle_system_contacts {
         for contact in particle_system.body_contacts() {
             for (entity, mut particle_contact_component) in &mut particle_contact_components {
-                if contact.body == entity {
+                if contact.body == entity || contact.fixture == entity {
                     particle_contact_component
                         .contacts_mut()
                         .insert(contact.particle_index);

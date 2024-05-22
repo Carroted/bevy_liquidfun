@@ -62,7 +62,7 @@ fn setup(mut commands: Commands) {
             0.0,
         );
         commands
-            .create_body(&b2BodyDef::default(), &fixture_def)
+            .spawn_body(&b2BodyDef::default(), &fixture_def)
             .insert(DebugDrawFixtures::default_static());
     }
 
@@ -79,7 +79,7 @@ fn setup(mut commands: Commands) {
             ..default()
         };
         commands
-            .create_body(&b2BodyDef::default(), &fixture_def)
+            .spawn_body(&b2BodyDef::default(), &fixture_def)
             .insert((
                 DebugDrawFixtures::default_static(),
                 b2ParticlesInContact::default(),

@@ -80,7 +80,7 @@ fn setup_box(mut commands: Commands) {
         b2Shape::create_box_with_offset(2., 0.05, Vec2::new(0.0, -1.0)),
     ];
 
-    let box_entity = commands.create_multi_fixture_body(
+    let box_entity = commands.spawn_multi_fixture_body(
         &box_def,
         &shapes
             .into_iter()

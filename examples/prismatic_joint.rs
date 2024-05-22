@@ -104,7 +104,7 @@ fn create_ground(commands: &mut Commands) -> Entity {
         0.,
     );
     commands
-        .create_body(&b2BodyDef::default(), &fixture_def)
+        .spawn_body(&b2BodyDef::default(), &fixture_def)
         .insert(DebugDrawFixtures::default_static())
         .id()
 }
@@ -120,7 +120,7 @@ fn create_box(commands: &mut Commands) -> Entity {
     let box_shape = b2Shape::create_box(1.0, 1.0);
     let fixture_def = b2FixtureDef::new(box_shape, 1.);
     commands
-        .create_body(&body_def, &fixture_def)
+        .spawn_body(&body_def, &fixture_def)
         .insert(DebugDrawFixtures::default_dynamic()).id()
 }
 

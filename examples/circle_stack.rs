@@ -56,7 +56,7 @@ fn setup_physics_bodies(mut commands: Commands) {
             0.,
         );
         commands
-            .create_body(&b2BodyDef::default(), &fixture_def)
+            .spawn_body(&b2BodyDef::default(), &fixture_def)
             .insert(DebugDrawFixtures::default_static());
     }
 
@@ -72,7 +72,7 @@ fn setup_physics_bodies(mut commands: Commands) {
             ..default()
         };
         commands
-            .create_body(&body_def, &fixture_def)
+            .spawn_body(&body_def, &fixture_def)
             .insert(DebugDrawFixtures::default_dynamic());
     }
 }

@@ -295,13 +295,13 @@ impl GravityScale {
 
 #[allow(non_camel_case_types)]
 pub trait b2BodyCommands {
-    fn create_body(
+    fn spawn_body(
         &mut self,
         body_def: &b2BodyDef,
         fixture_def: &b2FixtureDef,
     ) -> EntityCommands<'_>;
 
-    fn create_multi_fixture_body(
+    fn spawn_multi_fixture_body(
         &mut self,
         body_def: &b2BodyDef,
         fixture_defs: &Vec<b2FixtureDef>,
@@ -310,7 +310,7 @@ pub trait b2BodyCommands {
 }
 
 impl b2BodyCommands for Commands<'_, '_> {
-    fn create_body(
+    fn spawn_body(
         &mut self,
         body_def: &b2BodyDef,
         fixture_def: &b2FixtureDef,
@@ -321,7 +321,7 @@ impl b2BodyCommands for Commands<'_, '_> {
         entity
     }
 
-    fn create_multi_fixture_body(
+    fn spawn_multi_fixture_body(
         &mut self,
         body_def: &b2BodyDef,
         fixture_defs: &Vec<b2FixtureDef>,

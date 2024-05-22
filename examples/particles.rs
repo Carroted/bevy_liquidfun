@@ -93,7 +93,7 @@ fn setup_ground(mut commands: Commands) {
             },
         ];
 
-        commands.create_multi_fixture_body(
+        commands.spawn_multi_fixture_body(
             &b2BodyDef::default(),
             &shapes
                 .into_iter()

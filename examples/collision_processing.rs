@@ -70,7 +70,7 @@ fn setup_bodies(mut commands: Commands) {
             0.,
         );
         commands
-            .create_body(&b2BodyDef::default(), &fixture_def)
+            .spawn_body(&b2BodyDef::default(), &fixture_def)
             .insert(DebugDrawFixtures::default_static());
     }
 
@@ -134,7 +134,7 @@ fn create_body_in_random_position(
     rng: &mut ThreadRng,
 ) {
     commands
-        .create_body(
+        .spawn_body(
             &b2BodyDef {
                 body_type: Dynamic,
                 position: Vec2::new(

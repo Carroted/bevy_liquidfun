@@ -107,7 +107,7 @@ fn setup_ground(mut commands: Commands) {
         0.,
     );
     commands
-        .create_body(&b2BodyDef::default(), &fixture_def)
+        .spawn_body(&b2BodyDef::default(), &fixture_def)
         .insert(DebugDrawFixtures::default_static());
 }
 
@@ -150,7 +150,7 @@ fn create_body(shape: &b2Shape, mut commands: Commands) {
         ..default()
     };
     commands
-        .create_body(&body_def, &fixture_def)
+        .spawn_body(&body_def, &fixture_def)
         .insert((AllowDestroy, DebugDrawFixtures::default_dynamic()));
 }
 

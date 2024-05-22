@@ -10,10 +10,9 @@ use bevy_liquidfun::{
     dynamics::{
         b2BeginContactEvent,
         b2Body,
-        b2BodyBundle,
+        b2BodyCommands,
         b2BodyDef,
         b2BodyType::Dynamic,
-        b2Fixture,
         b2FixtureDef,
         b2World,
     },
@@ -63,17 +62,16 @@ fn setup_physics_world(mut commands: Commands) {
 
 fn setup_bodies(mut commands: Commands) {
     {
-        let ground_entity = commands.spawn(b2BodyBundle::default()).id();
-
-        let shape = b2Shape::EdgeTwoSided {
-            v1: Vec2::new(-50., 0.),
-            v2: Vec2::new(50., 0.),
-        };
-        let fixture_def = b2FixtureDef::new(shape, 0.);
-        commands.spawn((
-            b2Fixture::new(ground_entity, &fixture_def),
-            DebugDrawFixtures::default_static(),
-        ));
+        let fixture_def = b2FixtureDef::new(
+            b2Shape::EdgeTwoSided {
+                v1: Vec2::new(-50., 0.),
+                v2: Vec2::new(50., 0.),
+            },
+            0.,
+        );
+        commands
+            .create_body(&b2BodyDef::default(), &fixture_def)
+            .insert(DebugDrawFixtures::default_static());
     }
 
     let x_range = -5.0..=5.0;
@@ -82,104 +80,72 @@ fn setup_bodies(mut commands: Commands) {
 
     // small triangle
     {
-        let body_entity =
-            create_body_in_random_position(&mut commands, &x_range, &y_range, &mut rng);
         let shape = b2Shape::Polygon {
             vertices: vec![Vec2::new(-1., 0.), Vec2::new(1., 0.), Vec2::new(0., 2.)],
         };
-        let fixture_def = b2FixtureDef::new(shape, 1.0);
-        commands.spawn((
-            b2Fixture::new(body_entity, &fixture_def),
-            DebugDrawFixtures::default_dynamic(),
-        ));
+        create_body_in_random_position(&mut commands, shape, &x_range, &y_range, &mut rng);
     }
 
     // large triangle
     {
-        let body_entity =
-            create_body_in_random_position(&mut commands, &x_range, &y_range, &mut rng);
         let shape = b2Shape::Polygon {
             vertices: vec![Vec2::new(-2., 0.), Vec2::new(2., 0.), Vec2::new(0., 4.)],
         };
-        let fixture_def = b2FixtureDef::new(shape, 1.0);
-        commands.spawn((
-            b2Fixture::new(body_entity, &fixture_def),
-            DebugDrawFixtures::default_dynamic(),
-        ));
+        create_body_in_random_position(&mut commands, shape, &x_range, &y_range, &mut rng);
     }
 
     // small box
     {
-        let body_entity =
-            create_body_in_random_position(&mut commands, &x_range, &y_range, &mut rng);
         let shape = b2Shape::create_box(1., 0.5);
-        let fixture_def = b2FixtureDef::new(shape, 1.0);
-        commands.spawn((
-            b2Fixture::new(body_entity, &fixture_def),
-            DebugDrawFixtures::default_dynamic(),
-        ));
+        create_body_in_random_position(&mut commands, shape, &x_range, &y_range, &mut rng);
     }
 
     // large box
     {
-        let body_entity =
-            create_body_in_random_position(&mut commands, &x_range, &y_range, &mut rng);
         let shape = b2Shape::create_box(2., 1.);
-        let fixture_def = b2FixtureDef::new(shape, 1.0);
-        commands.spawn((
-            b2Fixture::new(body_entity, &fixture_def),
-            DebugDrawFixtures::default_dynamic(),
-        ));
+        create_body_in_random_position(&mut commands, shape, &x_range, &y_range, &mut rng);
     }
 
     // small circle
     {
-        let body_entity =
-            create_body_in_random_position(&mut commands, &x_range, &y_range, &mut rng);
         let shape = b2Shape::Circle {
             radius: 1.,
             position: Vec2::ZERO,
         };
-        let fixture_def = b2FixtureDef::new(shape, 1.0);
-        commands.spawn((
-            b2Fixture::new(body_entity, &fixture_def),
-            DebugDrawFixtures::default_dynamic(),
-        ));
+        create_body_in_random_position(&mut commands, shape, &x_range, &y_range, &mut rng);
     }
 
     // large circle
     {
-        let body_entity =
-            create_body_in_random_position(&mut commands, &x_range, &y_range, &mut rng);
         let shape = b2Shape::Circle {
             radius: 2.,
             position: Vec2::ZERO,
         };
-        let fixture_def = b2FixtureDef::new(shape, 1.0);
-        commands.spawn((
-            b2Fixture::new(body_entity, &fixture_def),
-            DebugDrawFixtures::default_dynamic(),
-        ));
+
+        create_body_in_random_position(&mut commands, shape, &x_range, &y_range, &mut rng);
     }
 }
 
 fn create_body_in_random_position(
     commands: &mut Commands,
+    shape: b2Shape,
     x_range: &RangeInclusive<f32>,
     y_range: &RangeInclusive<f32>,
     rng: &mut ThreadRng,
-) -> Entity {
-    let body_entity = commands
-        .spawn(b2BodyBundle::new(&b2BodyDef {
-            body_type: Dynamic,
-            position: Vec2::new(
-                rng.gen_range(x_range.clone()),
-                rng.gen_range(y_range.clone()),
-            ),
-            ..default()
-        }))
-        .id();
-    body_entity
+) {
+    commands
+        .create_body(
+            &b2BodyDef {
+                body_type: Dynamic,
+                position: Vec2::new(
+                    rng.gen_range(x_range.clone()),
+                    rng.gen_range(y_range.clone()),
+                ),
+                ..default()
+            },
+            &b2FixtureDef::new(shape, 1.0),
+        )
+        .insert(DebugDrawFixtures::default_dynamic());
 }
 
 fn process_collisions(

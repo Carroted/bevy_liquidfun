@@ -5,10 +5,9 @@ use bevy::prelude::*;
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{
-        b2BodyBundle,
+        b2BodyCommands,
         b2BodyDef,
         b2BodyType::Dynamic,
-        b2Fixture,
         b2FixtureDef,
         b2MotorJoint,
         b2MotorJointDef,
@@ -103,19 +102,17 @@ fn setup_physics_bodies(mut commands: Commands) {
 }
 
 fn create_ground(commands: &mut Commands) -> Entity {
-    let ground_entity = commands.spawn(b2BodyBundle::default()).id();
-
-    let shape = b2Shape::EdgeTwoSided {
-        v1: Vec2::new(-20., 0.),
-        v2: Vec2::new(20., 0.),
-    };
-    let fixture_def = b2FixtureDef::new(shape, 0.);
-    commands.spawn((
-        b2Fixture::new(ground_entity, &fixture_def),
-        DebugDrawFixtures::default_static(),
-    ));
-
-    return ground_entity;
+    let fixture_def = b2FixtureDef::new(
+        b2Shape::EdgeTwoSided {
+            v1: Vec2::new(-20., 0.),
+            v2: Vec2::new(20., 0.),
+        },
+        0.,
+    );
+    commands
+        .create_body(&b2BodyDef::default(), &fixture_def)
+        .insert(DebugDrawFixtures::default_static())
+        .id()
 }
 
 fn create_box(commands: &mut Commands) -> Entity {
@@ -125,8 +122,6 @@ fn create_box(commands: &mut Commands) -> Entity {
         allow_sleep: false,
         ..default()
     };
-    let box_entity = commands.spawn(b2BodyBundle::new(&body_def)).id();
-
     let shape = b2Shape::create_box(2.0, 0.5);
     let fixture_def = b2FixtureDef {
         shape,
@@ -134,12 +129,11 @@ fn create_box(commands: &mut Commands) -> Entity {
         density: 2.0,
         ..default()
     };
-    commands.spawn((
-        b2Fixture::new(box_entity, &fixture_def),
-        DebugDrawFixtures::default_dynamic(),
-    ));
 
-    return box_entity;
+    commands
+        .create_body(&body_def, &fixture_def)
+        .insert(DebugDrawFixtures::default_dynamic())
+        .id()
 }
 
 fn toggle_state(

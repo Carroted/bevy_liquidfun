@@ -4,7 +4,7 @@ extern crate bevy_liquidfun;
 use bevy::prelude::*;
 use bevy_liquidfun::{
     collision::b2Shape,
-    dynamics::{b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2FixtureDef, b2World},
+    dynamics::{b2BodyCommands, b2BodyDef, b2BodyType::Dynamic, b2FixtureDef, b2World},
     plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
     utils::DebugDrawFixtures,
 };
@@ -48,17 +48,16 @@ fn setup_physics_world(world: &mut World) {
 
 fn setup_physics_bodies(mut commands: Commands) {
     {
-        let ground_entity = commands.spawn(b2BodyBundle::default()).id();
-
-        let shape = b2Shape::EdgeTwoSided {
-            v1: Vec2::new(-40., 0.),
-            v2: Vec2::new(40., 0.),
-        };
-        let fixture_def = b2FixtureDef::new(shape, 0.);
-        commands.spawn((
-            b2Fixture::new(ground_entity, &fixture_def),
-            DebugDrawFixtures::default_static(),
-        ));
+        let fixture_def = b2FixtureDef::new(
+            b2Shape::EdgeTwoSided {
+                v1: Vec2::new(-40., 0.),
+                v2: Vec2::new(40., 0.),
+            },
+            0.,
+        );
+        commands
+            .create_body(&b2BodyDef::default(), &fixture_def)
+            .insert(DebugDrawFixtures::default_static());
     }
 
     let circle_shape = b2Shape::Circle {
@@ -72,13 +71,8 @@ fn setup_physics_bodies(mut commands: Commands) {
             position: Vec2::new(0., 4. + 3. * i as f32),
             ..default()
         };
-        let mut body_bundle = b2BodyBundle::new(&body_def);
-        body_bundle.body.linear_velocity = Vec2::new(0., -50.);
-        let body_entity = commands.spawn(body_bundle).id();
-
-        commands.spawn((
-            b2Fixture::new(body_entity, &fixture_def),
-            DebugDrawFixtures::default_dynamic(),
-        ));
+        commands
+            .create_body(&body_def, &fixture_def)
+            .insert(DebugDrawFixtures::default_dynamic());
     }
 }

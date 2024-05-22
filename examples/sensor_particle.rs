@@ -4,7 +4,7 @@ extern crate bevy_liquidfun;
 use bevy::prelude::*;
 use bevy_liquidfun::{
     collision::b2Shape,
-    dynamics::{b2BodyBundle, b2BodyDef, b2Fixture, b2FixtureDef, b2ParticlesInContact, b2World},
+    dynamics::{b2BodyCommands, b2BodyDef, b2FixtureDef, b2ParticlesInContact, b2World},
     particles::{
         b2ParticleFlags,
         b2ParticleGroup,
@@ -52,30 +52,25 @@ fn setup_physics_world(mut commands: Commands) {
 }
 
 fn setup(mut commands: Commands) {
+    // ground
     {
-        let ground_entity = commands.spawn(b2BodyBundle::default()).id();
-
-        let shape = b2Shape::EdgeTwoSided {
-            v1: Vec2::new(-40., 0.),
-            v2: Vec2::new(40., 0.),
-        };
-        let fixture_def = b2FixtureDef::new(shape, 0.0);
-        commands.spawn((
-            b2Fixture::new(ground_entity, &fixture_def),
-            DebugDrawFixtures::default_static(),
-        ));
+        let fixture_def = b2FixtureDef::new(
+            b2Shape::EdgeTwoSided {
+                v1: Vec2::new(-40., 0.),
+                v2: Vec2::new(40., 0.),
+            },
+            0.0,
+        );
+        commands
+            .create_body(&b2BodyDef::default(), &fixture_def)
+            .insert(DebugDrawFixtures::default_static());
     }
 
+    // sensor
     {
-        let b2body_def = b2BodyDef {
-            position: Vec2::new(0.0, 10.0),
-            ..default()
-        };
-        let body_entity = commands.spawn((b2BodyBundle::new(&b2body_def),)).id();
-
         let shape = b2Shape::Circle {
             radius: 5.0,
-            position: Vec2::new(0.0, 0.0),
+            position: Vec2::new(0.0, 10.0),
         };
 
         let fixture_def = b2FixtureDef {
@@ -83,12 +78,13 @@ fn setup(mut commands: Commands) {
             is_sensor: true,
             ..default()
         };
-        commands.spawn((
-            b2Fixture::new(body_entity, &fixture_def),
-            DebugDrawFixtures::default_static(),
-            b2ParticlesInContact::default(),
-        ))
-    };
+        commands
+            .create_body(&b2BodyDef::default(), &fixture_def)
+            .insert((
+                DebugDrawFixtures::default_static(),
+                b2ParticlesInContact::default(),
+            ));
+    }
 }
 
 fn setup_particles(mut commands: Commands) {

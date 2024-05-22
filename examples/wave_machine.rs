@@ -8,10 +8,9 @@ use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{
         b2Body,
-        b2BodyBundle,
+        b2BodyCommands,
         b2BodyDef,
         b2BodyType::Dynamic,
-        b2Fixture,
         b2FixtureDef,
         b2Joint,
         b2RevoluteJoint,
@@ -73,7 +72,6 @@ fn setup_box(mut commands: Commands) {
         position: box_pos,
         ..default()
     };
-    let box_entity = commands.spawn(b2BodyBundle::new(&box_def)).id();
 
     let shapes = vec![
         b2Shape::create_box_with_offset(0.05, 1., Vec2::new(2.0, 0.0)),
@@ -82,13 +80,16 @@ fn setup_box(mut commands: Commands) {
         b2Shape::create_box_with_offset(2., 0.05, Vec2::new(0.0, -1.0)),
     ];
 
-    shapes.into_iter().for_each(|shape| {
-        let fixture_def = b2FixtureDef::new(shape, 5.);
-        commands.spawn((
-            b2Fixture::new(box_entity, &fixture_def),
-            DebugDrawFixtures::default_static(),
-        ));
-    });
+    let box_entity = commands.create_multi_fixture_body(
+        &box_def,
+        &shapes
+            .into_iter()
+            .map(|shape| b2FixtureDef::new(shape, 5.))
+            .collect(),
+        |fixture| {
+            fixture.insert(DebugDrawFixtures::default_static());
+        },
+    ).id();
 
     let joint_def = b2RevoluteJointDef {
         local_anchor_a: box_pos,

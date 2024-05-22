@@ -6,7 +6,7 @@ use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{
         b2BodiesInContact,
-        b2BodyBundle,
+        b2BodyCommands,
         b2BodyDef,
         b2BodyType,
         b2Fixture,
@@ -54,56 +54,55 @@ fn setup_physics_world(mut commands: Commands) {
 }
 
 fn setup(mut commands: Commands) {
+    // ground
     {
-        let ground_entity = commands.spawn(b2BodyBundle::default()).id();
-
-        let shape = b2Shape::EdgeTwoSided {
-            v1: Vec2::new(-40., 0.),
-            v2: Vec2::new(40., 0.),
-        };
-        let fixture_def = b2FixtureDef::new(shape, 0.0);
-        commands.spawn((
-            b2Fixture::new(ground_entity, &fixture_def),
-            DebugDrawFixtures::default_static(),
-        ));
+        let fixture_def = b2FixtureDef::new(
+            b2Shape::EdgeTwoSided {
+                v1: Vec2::new(-40., 0.),
+                v2: Vec2::new(40., 0.),
+            },
+            0.0,
+        );
+        commands
+            .create_body(&b2BodyDef::default(), &fixture_def)
+            .insert(DebugDrawFixtures::default_static());
     }
 
-    let body_entity = commands.spawn(b2BodyBundle::default()).id();
-
-    let shape = b2Shape::Circle {
-        radius: 5.0,
-        position: Vec2::new(0.0, 10.0),
-    };
-
-    let fixture_def = b2FixtureDef {
-        shape,
-        is_sensor: true,
-        ..default()
-    };
-    commands.spawn((
-        b2Fixture::new(body_entity, &fixture_def),
-        DebugDrawFixtures::default_static(),
-        b2BodiesInContact::default(),
-        Sensor,
-    ));
-
-    for i in 0..7 {
+    // sensor
+    {
         let shape = b2Shape::Circle {
-            radius: 1.0,
-            position: Vec2::ZERO,
+            radius: 5.0,
+            position: Vec2::new(0.0, 10.0),
         };
 
+        let fixture_def = b2FixtureDef {
+            shape,
+            is_sensor: true,
+            ..default()
+        };
+        commands
+            .create_body(&b2BodyDef::default(), &fixture_def)
+            .insert((
+                DebugDrawFixtures::default_static(),
+                b2BodiesInContact::default(),
+                Sensor,
+            ));
+    }
+
+    let shape = b2Shape::Circle {
+        radius: 1.0,
+        position: Vec2::ZERO,
+    };
+    let fixture_def = b2FixtureDef::new(shape, 1.0);
+    for i in 0..7 {
         let body_def = b2BodyDef {
             body_type: b2BodyType::Dynamic,
             position: Vec2::new(-10.0 + 3.0 * i as f32, 20.0),
             ..default()
         };
-
-        let body_entity = commands.spawn(b2BodyBundle::new(&body_def)).id();
-        commands.spawn((
-            b2Fixture::new(body_entity, &b2FixtureDef::new(shape, 1.0)),
-            DebugDrawFixtures::default_static(),
-        ));
+        commands
+            .create_body(&body_def, &fixture_def)
+            .insert(DebugDrawFixtures::default_dynamic());
     }
 }
 

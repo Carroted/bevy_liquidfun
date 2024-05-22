@@ -5,10 +5,9 @@ use bevy::prelude::*;
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{
-        b2BodyBundle,
+        b2BodyCommands,
         b2BodyDef,
         b2BodyType::Dynamic,
-        b2Fixture,
         b2FixtureDef,
         b2RevoluteJointDef,
         b2World,
@@ -50,24 +49,21 @@ fn setup_physics_world(world: &mut World) {
 }
 
 fn setup_physics_bodies(mut commands: Commands) {
-    let ground_entity = {
-        let ground_entity = commands.spawn(b2BodyBundle::default()).id();
-
-        let shape = b2Shape::EdgeTwoSided {
+    let ground_def = b2FixtureDef::new(
+        b2Shape::EdgeTwoSided {
             v1: Vec2::new(-40., 0.),
             v2: Vec2::new(40., 0.),
-        };
-        let fixture_def = b2FixtureDef::new(shape, 0.0);
-        commands.spawn((
-            b2Fixture::new(ground_entity, &fixture_def),
-            DebugDrawFixtures::default_static(),
-        ));
-        ground_entity
-    };
+        },
+        0.0,
+    );
+    let ground_entity = commands
+        .create_body(&b2BodyDef::default(), &ground_def)
+        .insert(DebugDrawFixtures::default_static())
+        .id();
 
-    let shape = b2Shape::create_box(0.6, 0.125);
+    let box_shape = b2Shape::create_box(0.6, 0.125);
     let fixture_def = b2FixtureDef {
-        shape,
+        shape: box_shape,
         density: 20.0,
         friction: 0.2,
         ..default()
@@ -82,18 +78,13 @@ fn setup_physics_bodies(mut commands: Commands) {
             ..default()
         };
 
-        let body_bundle = b2BodyBundle::new(&body_def);
-        let body_entity = commands.spawn(body_bundle).id();
-        body_entities[i] = body_entity;
-
-        commands.spawn((
-            b2Fixture::new(body_entity, &fixture_def),
-            DebugDrawFixtures {
+        body_entities[i] = commands
+            .create_body(&body_def, &fixture_def)
+            .insert(DebugDrawFixtures {
                 draw_up_vector: false,
                 draw_right_vector: false,
                 ..DebugDrawFixtures::default_dynamic()
-            },
-        ));
+            }).id();
     }
 
     let joint_def = b2RevoluteJointDef {

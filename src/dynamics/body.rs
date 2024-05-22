@@ -305,6 +305,7 @@ pub trait b2BodyCommands {
         &mut self,
         body_def: &b2BodyDef,
         fixture_defs: &Vec<b2FixtureDef>,
+        fixture_builder: fn(&mut EntityCommands),
     ) -> EntityCommands<'_>;
 }
 
@@ -324,13 +325,14 @@ impl b2BodyCommands for Commands<'_, '_> {
         &mut self,
         body_def: &b2BodyDef,
         fixture_defs: &Vec<b2FixtureDef>,
+        fixture_builder: fn(&mut EntityCommands),
     ) -> EntityCommands<'_> {
         let mut entity = self.spawn_empty();
         let id = entity.id();
         entity.insert(b2BodyBundle::new(body_def));
         entity.with_children(|builder| {
             for fixture in fixture_defs {
-                builder.spawn(b2Fixture::new(id, fixture));
+                fixture_builder(&mut builder.spawn(b2Fixture::new(id, fixture)));
             }
         });
         entity

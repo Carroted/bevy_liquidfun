@@ -4,7 +4,15 @@ extern crate bevy_liquidfun;
 use bevy::prelude::*;
 use bevy_liquidfun::{
     collision::b2Shape,
-    dynamics::{b2BodyBundle, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2FixtureDef, b2World},
+    dynamics::{
+        b2BodyBundle,
+        b2BodyCommands,
+        b2BodyDef,
+        b2BodyType::Dynamic,
+        b2Fixture,
+        b2FixtureDef,
+        b2World,
+    },
     particles::{
         b2ParticleFlags,
         b2ParticleGroup,
@@ -58,56 +66,43 @@ fn setup_physics_world(mut commands: Commands) {
 
 fn setup_ground(mut commands: Commands) {
     {
-        let ground_entity = commands.spawn(b2BodyBundle::default()).id();
-
-        {
-            let shape = b2Shape::Polygon {
+        let shapes = vec![
+            b2Shape::Polygon {
                 vertices: vec![
                     Vec2::new(-4., -1.),
                     Vec2::new(4., -1.),
                     Vec2::new(4., 0.),
                     Vec2::new(-4., 0.),
                 ],
-            };
-
-            let fixture_def = b2FixtureDef::new(shape, 0.);
-            commands.spawn((
-                b2Fixture::new(ground_entity, &fixture_def),
-                DebugDrawFixtures::default_static(),
-            ));
-        }
-
-        {
-            let shape = b2Shape::Polygon {
+            },
+            b2Shape::Polygon {
                 vertices: vec![
                     Vec2::new(-4., -0.1),
                     Vec2::new(-2., -0.1),
                     Vec2::new(-2., 2.),
                     Vec2::new(-4., 3.),
                 ],
-            };
-            let fixture_def = b2FixtureDef::new(shape, 0.);
-            commands.spawn((
-                b2Fixture::new(ground_entity, &fixture_def),
-                DebugDrawFixtures::default_static(),
-            ));
-        }
-
-        {
-            let shape = b2Shape::Polygon {
+            },
+            b2Shape::Polygon {
                 vertices: vec![
                     Vec2::new(2., -0.1),
                     Vec2::new(4., -0.1),
                     Vec2::new(4., 3.),
                     Vec2::new(2., 2.),
                 ],
-            };
-            let fixture_def = b2FixtureDef::new(shape, 0.);
-            commands.spawn((
-                b2Fixture::new(ground_entity, &fixture_def),
-                DebugDrawFixtures::default_static(),
-            ));
-        }
+            },
+        ];
+
+        commands.create_multi_fixture_body(
+            &b2BodyDef::default(),
+            &shapes
+                .into_iter()
+                .map(|shape| b2FixtureDef::new(shape, 0.))
+                .collect(),
+            |e| {
+                e.insert(DebugDrawFixtures::default_static());
+            },
+        );
     }
 }
 

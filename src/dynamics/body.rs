@@ -294,7 +294,7 @@ impl GravityScale {
 }
 
 #[allow(non_camel_case_types)]
-pub trait b2Commands {
+pub trait b2BodyCommands {
     fn create_body(
         &mut self,
         body_def: &b2BodyDef,
@@ -308,7 +308,7 @@ pub trait b2Commands {
     ) -> EntityCommands<'_>;
 }
 
-impl b2Commands for Commands<'_, '_> {
+impl b2BodyCommands for Commands<'_, '_> {
     fn create_body(
         &mut self,
         body_def: &b2BodyDef,

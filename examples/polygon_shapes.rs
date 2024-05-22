@@ -7,7 +7,7 @@ use std::f32::consts::PI;
 use bevy::{input::prelude::*, prelude::*};
 use bevy_liquidfun::{
     collision::b2Shape,
-    dynamics::{b2BodyDef, b2BodyType::Dynamic, b2Commands, b2FixtureDef, b2World},
+    dynamics::{b2BodyDef, b2BodyType::Dynamic, b2BodyCommands, b2FixtureDef, b2World},
     plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
     utils::DebugDrawFixtures,
 };

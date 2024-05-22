@@ -1,9 +1,10 @@
-use bevy::{prelude::*, utils::hashbrown::HashSet};
+use bevy::{ecs::system::EntityCommands, prelude::*, utils::hashbrown::HashSet};
 use libliquidfun_sys::box2d::{
     ffi,
     ffi::b2BodyType::{b2_dynamicBody, b2_kinematicBody, b2_staticBody},
 };
 
+use super::{b2Fixture, b2FixtureDef};
 use crate::{
     dynamics::b2WorldImpl,
     internal::{to_Vec2, to_b2Vec2},
@@ -110,7 +111,7 @@ impl b2Body {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct b2BodyDef {
     pub body_type: b2BodyType,
     pub position: Vec2,
@@ -290,4 +291,48 @@ impl Default for GravityScale {
 
 impl GravityScale {
     pub const ZERO: Self = Self(0.);
+}
+
+#[allow(non_camel_case_types)]
+pub trait b2Commands {
+    fn create_body(
+        &mut self,
+        body_def: &b2BodyDef,
+        fixture_def: &b2FixtureDef,
+    ) -> EntityCommands<'_>;
+
+    fn create_multi_fixture_body(
+        &mut self,
+        body_def: &b2BodyDef,
+        fixture_defs: &Vec<b2FixtureDef>,
+    ) -> EntityCommands<'_>;
+}
+
+impl b2Commands for Commands<'_, '_> {
+    fn create_body(
+        &mut self,
+        body_def: &b2BodyDef,
+        fixture_def: &b2FixtureDef,
+    ) -> EntityCommands<'_> {
+        let mut entity = self.spawn_empty();
+        let id = entity.id();
+        entity.insert((b2BodyBundle::new(body_def), b2Fixture::new(id, fixture_def)));
+        entity
+    }
+
+    fn create_multi_fixture_body(
+        &mut self,
+        body_def: &b2BodyDef,
+        fixture_defs: &Vec<b2FixtureDef>,
+    ) -> EntityCommands<'_> {
+        let mut entity = self.spawn_empty();
+        let id = entity.id();
+        entity.insert(b2BodyBundle::new(body_def));
+        entity.with_children(|builder| {
+            for fixture in fixture_defs {
+                builder.spawn(b2Fixture::new(id, fixture));
+            }
+        });
+        entity
+    }
 }

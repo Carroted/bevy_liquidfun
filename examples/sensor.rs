@@ -6,7 +6,6 @@ use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{
         b2BodiesInContact,
-        b2Body,
         b2BodyBundle,
         b2BodyDef,
         b2BodyType,
@@ -69,52 +68,48 @@ fn setup(mut commands: Commands) {
         ));
     }
 
-    let sensor_entity = {
-        let body_entity = commands.spawn(b2BodyBundle::default()).id();
+    let body_entity = commands.spawn(b2BodyBundle::default()).id();
 
-        let shape = b2Shape::Circle {
-            radius: 5.0,
-            position: Vec2::new(0.0, 10.0),
-        };
-
-        let fixture_def = b2FixtureDef {
-            shape,
-            is_sensor: true,
-            ..default()
-        };
-        commands.spawn((
-            b2Fixture::new(body_entity, &fixture_def),
-            DebugDrawFixtures::default_static(),
-            b2BodiesInContact::default(),
-            Sensor,
-        ))
+    let shape = b2Shape::Circle {
+        radius: 5.0,
+        position: Vec2::new(0.0, 10.0),
     };
 
-    {
-        for i in 0..7 {
-            let shape = b2Shape::Circle {
-                radius: 1.0,
-                position: Vec2::ZERO,
-            };
+    let fixture_def = b2FixtureDef {
+        shape,
+        is_sensor: true,
+        ..default()
+    };
+    commands.spawn((
+        b2Fixture::new(body_entity, &fixture_def),
+        DebugDrawFixtures::default_static(),
+        b2BodiesInContact::default(),
+        Sensor,
+    ));
 
-            let body_def = b2BodyDef {
-                body_type: b2BodyType::Dynamic,
-                position: Vec2::new(-10.0 + 3.0 * i as f32, 20.0),
-                ..default()
-            };
+    for i in 0..7 {
+        let shape = b2Shape::Circle {
+            radius: 1.0,
+            position: Vec2::ZERO,
+        };
 
-            let body_entity = commands.spawn(b2BodyBundle::new(&body_def)).id();
-            commands.spawn((
-                b2Fixture::new(body_entity, &b2FixtureDef::new(shape, 1.0)),
-                DebugDrawFixtures::default_static(),
-            ));
-        }
+        let body_def = b2BodyDef {
+            body_type: b2BodyType::Dynamic,
+            position: Vec2::new(-10.0 + 3.0 * i as f32, 20.0),
+            ..default()
+        };
+
+        let body_entity = commands.spawn(b2BodyBundle::new(&body_def)).id();
+        commands.spawn((
+            b2Fixture::new(body_entity, &b2FixtureDef::new(shape, 1.0)),
+            DebugDrawFixtures::default_static(),
+        ));
     }
 }
 
 fn apply_force(
     query: Query<(&b2Fixture, &b2BodiesInContact), With<Sensor>>,
-    transforms: Query<(&Transform)>,
+    transforms: Query<&Transform>,
     mut external_forces: Query<&mut ExternalForce>,
 ) {
     for (fixture, bodies) in &query {

@@ -113,12 +113,12 @@ fn setup_particles(mut commands: Commands) {
 }
 
 fn apply_force(
-    particle_query: Query<(&b2ParticlesInContact)>,
+    particle_query: Query<&b2ParticlesInContact>,
     mut particle_systems: Query<&mut b2ParticleSystem>,
 ) {
     let mut particle_system = particle_systems.get_single_mut().unwrap();
 
-    for (particles) in &particle_query {
+    for particles in &particle_query {
         for index in particles.contacts().iter() {
             let position = particle_system
                 .get_positions()

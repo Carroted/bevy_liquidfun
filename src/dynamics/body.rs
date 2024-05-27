@@ -1,4 +1,8 @@
-use bevy::{ecs::system::EntityCommands, prelude::*, utils::hashbrown::HashSet};
+use bevy::{
+    ecs::{entity::MapEntities, system::EntityCommands},
+    prelude::*,
+    utils::hashbrown::HashSet,
+};
 use libliquidfun_sys::box2d::{
     ffi,
     ffi::b2BodyType::{b2_dynamicBody, b2_kinematicBody, b2_staticBody},
@@ -11,7 +15,9 @@ use crate::{
 };
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, Reflect)]
+#[cfg_attr(feature = "bevy-inspector-egui", derive(bevy_inspector_egui::inspector_options::InspectorOptions))]
+#[type_path = "bevy_liquidfun"]
 pub enum b2BodyType {
     #[default]
     Static,
@@ -40,7 +46,8 @@ impl Into<ffi::b2BodyType> for b2BodyType {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
+#[type_path = "bevy_liquidfun"]
 pub struct b2Body {
     pub(crate) fixtures: HashSet<Entity>,
 
@@ -54,6 +61,31 @@ pub struct b2Body {
     pub fixed_rotation: bool,
 
     mass: f32,
+}
+
+impl Default for b2Body {
+    fn default() -> Self {
+        Self {
+            fixtures: Default::default(),
+            body_type: b2BodyType::default(),
+            position: Vec2::ZERO,
+            angle: 0.,
+            linear_velocity: Vec2::ZERO,
+            angular_velocity: 0.,
+            awake: true,
+            allow_sleep: true,
+            fixed_rotation: false,
+            mass: 0.,
+        }
+    }
+}
+
+impl MapEntities for b2Body {
+    fn map_entities<M: EntityMapper>(&mut self, entity_mapper: &mut M) {
+        let mut new_fixtures = HashSet::with_capacity(self.fixtures.len());
+        new_fixtures.extend(self.fixtures.iter().map(|entity| entity_mapper.map_entity(*entity)));
+        self.fixtures = new_fixtures;
+    }
 }
 
 impl b2Body {
@@ -77,10 +109,12 @@ impl b2Body {
             return;
         };
 
+        self.body_type = From::from(body_ptr.as_ref().GetType());
         self.position = to_Vec2(body_ptr.as_ref().GetPosition());
         self.angle = body_ptr.as_ref().GetAngle();
         self.linear_velocity = to_Vec2(body_ptr.as_ref().GetLinearVelocity());
         self.angular_velocity = body_ptr.as_ref().GetAngularVelocity();
+        self.fixed_rotation = body_ptr.as_ref().IsFixedRotation();
         self.mass = body_ptr.as_ref().GetMass();
         self.awake = body_ptr.as_ref().IsAwake();
     }
@@ -90,6 +124,7 @@ impl b2Body {
             return;
         };
 
+        body_ptr.as_mut().SetType(self.body_type.into());
         body_ptr
             .as_mut()
             .SetTransform(&to_b2Vec2(&self.position), self.angle);
@@ -97,6 +132,7 @@ impl b2Body {
             .as_mut()
             .SetLinearVelocity(&to_b2Vec2(&self.linear_velocity));
         body_ptr.as_mut().SetAngularVelocity(self.angular_velocity);
+        body_ptr.as_mut().SetFixedRotation(self.fixed_rotation);
         body_ptr.as_mut().SetAwake(self.awake);
         body_ptr.as_mut().SetSleepingAllowed(self.allow_sleep);
     }

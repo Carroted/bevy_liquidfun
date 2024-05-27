@@ -1,35 +1,13 @@
 use std::{borrow::BorrowMut, ops::Deref, pin::Pin};
 
 use bevy::{prelude::*, transform::TransformSystem};
+use bevy::{prelude::*, transform::TransformSystem, utils::HashSet};
 use libliquidfun_sys::box2d::ffi::int32;
 
 use crate::{
     collision::b2Shape,
     dynamics::{
-        b2BeginContactEvent,
-        b2BodiesInContact,
-        b2Body,
-        b2Contact,
-        b2Contacts,
-        b2DistanceJoint,
-        b2EndContactEvent,
-        b2Fixture,
-        b2FixturesInContact,
-        b2Joint,
-        b2MotorJoint,
-        b2ParticleBodyContact,
-        b2ParticlesInContact,
-        b2PrismaticJoint,
-        b2RevoluteJoint,
-        b2WeldJoint,
-        b2World,
-        b2WorldSettings,
-        ExternalForce,
-        ExternalImpulse,
-        ExternalTorque,
-        GravityScale,
-        SyncJointToWorld,
-        ToJointPtr,
+        b2BeginContactEvent, b2BodiesInContact, b2Body, b2BodyType, b2Contact, b2Contacts, b2DistanceJoint, b2EndContactEvent, b2Fixture, b2FixturesInContact, b2Joint, b2MotorJoint, b2ParticleBodyContact, b2ParticlesInContact, b2PrismaticJoint, b2RevoluteJoint, b2WeldJoint, b2World, b2WorldSettings, ExternalForce, ExternalImpulse, ExternalTorque, GravityScale, SyncJointToWorld, ToJointPtr
     },
     internal::to_b2Vec2,
     particles::{b2ParticleGroup, b2ParticleSystem, b2ParticleSystemContacts},
@@ -59,6 +37,9 @@ impl Plugin for LiquidFunPlugin {
         app.add_plugins(LiquidFunSchedulePlugin)
             .insert_resource(self.settings.clone())
             .init_resource::<b2Contacts>()
+            .register_type::<b2Body>()
+            .register_type::<b2BodyType>()
+            .register_type::<HashSet<Entity>>()
             .register_type::<ExternalForce>()
             .register_type::<ExternalImpulse>()
             .register_type::<ExternalTorque>()

@@ -264,6 +264,7 @@ impl b2WorldImpl {
         }
 
         body_component.fixtures.insert(fixture_entity);
+
         let fixtures_for_body = self.body_to_fixtures.entry(body.0).or_default();
         fixtures_for_body.insert(fixture_entity);
         self.fixture_to_body.insert(fixture_entity, body_entity);

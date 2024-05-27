@@ -1,7 +1,6 @@
 use bevy::{
     ecs::{entity::MapEntities, system::EntityCommands},
     prelude::*,
-    utils::hashbrown::HashSet,
 };
 use libliquidfun_sys::box2d::{
     ffi,
@@ -16,7 +15,10 @@ use crate::{
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Default, Copy, Clone, Reflect)]
-#[cfg_attr(feature = "bevy-inspector-egui", derive(bevy_inspector_egui::inspector_options::InspectorOptions))]
+#[cfg_attr(
+    feature = "bevy-inspector-egui",
+    derive(bevy_inspector_egui::inspector_options::InspectorOptions)
+)]
 #[type_path = "bevy_liquidfun"]
 pub enum b2BodyType {
     #[default]
@@ -47,9 +49,10 @@ impl Into<ffi::b2BodyType> for b2BodyType {
 
 #[allow(non_camel_case_types)]
 #[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
 #[type_path = "bevy_liquidfun"]
 pub struct b2Body {
-    pub(crate) fixtures: HashSet<Entity>,
+    pub(crate) fixtures: Vec<Entity>,
 
     pub body_type: b2BodyType,
     pub position: Vec2,
@@ -82,8 +85,12 @@ impl Default for b2Body {
 
 impl MapEntities for b2Body {
     fn map_entities<M: EntityMapper>(&mut self, entity_mapper: &mut M) {
-        let mut new_fixtures = HashSet::with_capacity(self.fixtures.len());
-        new_fixtures.extend(self.fixtures.iter().map(|entity| entity_mapper.map_entity(*entity)));
+        let mut new_fixtures = Vec::with_capacity(self.fixtures.len());
+        new_fixtures.extend(
+            self.fixtures
+                .iter()
+                .map(|entity| entity_mapper.map_entity(*entity)),
+        );
         self.fixtures = new_fixtures;
     }
 }
@@ -91,7 +98,7 @@ impl MapEntities for b2Body {
 impl b2Body {
     pub fn new(body_def: &b2BodyDef) -> Self {
         b2Body {
-            fixtures: HashSet::new(),
+            fixtures: Default::default(),
             body_type: body_def.body_type,
             position: body_def.position,
             angle: body_def.angle,
@@ -141,7 +148,7 @@ impl b2Body {
         self.mass
     }
 
-    pub fn fixtures(&self) -> &HashSet<Entity> {
+    pub fn fixtures(&self) -> &Vec<Entity> {
         &self.fixtures
     }
 }

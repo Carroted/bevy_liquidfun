@@ -264,7 +264,9 @@ impl b2WorldImpl {
             self.fixture_ptrs.insert(fixture_entity, ffi_fixture);
         }
 
-        body_component.fixtures.insert(fixture_entity);
+        if body_component.fixtures.contains(&fixture_entity) {
+            body_component.fixtures.push(fixture_entity);
+        }
 
         let fixtures_for_body = self.body_to_fixtures.entry(body.0).or_default();
         fixtures_for_body.insert(fixture_entity);

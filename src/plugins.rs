@@ -43,11 +43,13 @@ impl Plugin for LiquidFunPlugin {
             .register_type::<ExternalForce>()
             .register_type::<ExternalImpulse>()
             .register_type::<ExternalTorque>()
+            .register_type::<b2Joint>()
             .register_type::<b2DistanceJoint>()
             .register_type::<b2MotorJoint>()
             .register_type::<b2PrismaticJoint>()
             .register_type::<b2RevoluteJoint>()
             .register_type::<b2WeldJoint>()
+            .register_type::<b2WorldSettings>()
             .add_systems(
                 PhysicsSchedule,
                 (

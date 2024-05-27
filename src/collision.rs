@@ -8,6 +8,7 @@ use crate::internal::*;
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, Reflect)]
+#[type_path = "bevy_liquidfun"]
 pub enum b2Shape {
     Circle {
         radius: f32,

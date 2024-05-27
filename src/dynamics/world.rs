@@ -31,6 +31,7 @@ use crate::{
 #[allow(non_camel_case_types)]
 #[derive(Resource, Clone, Reflect)]
 #[reflect(Resource)]
+#[type_path = "bevy_liquidfun"]
 pub struct b2WorldSettings {
     pub time_step: f32,
     pub max_frame_delta: f32,

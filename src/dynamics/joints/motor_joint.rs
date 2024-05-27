@@ -12,6 +12,7 @@ use crate::{
 #[allow(non_camel_case_types)]
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
+#[type_path = "bevy_liquidfun"]
 pub struct b2MotorJoint {
     /// Position of bodyB minus the position of bodyA, in bodyA's frame, in meters.
     pub linear_offset: Vec2,

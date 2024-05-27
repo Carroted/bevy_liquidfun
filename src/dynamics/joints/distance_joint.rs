@@ -12,6 +12,7 @@ use crate::{
 #[allow(non_camel_case_types)]
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
+#[type_path = "bevy_liquidfun"]
 pub struct b2DistanceJoint {
     /// The local anchor point relative to bodyA's origin.
     pub local_anchor_a: Vec2,

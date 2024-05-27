@@ -39,6 +39,7 @@ impl b2Fixture {
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, Reflect)]
+#[type_path = "bevy_liquidfun"]
 pub struct b2FixtureDef {
     pub shape: b2Shape,
     pub density: f32,
@@ -51,6 +52,7 @@ pub struct b2FixtureDef {
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Copy, Clone, Reflect)]
+#[type_path = "bevy_liquidfun"]
 pub struct b2Filter {
     pub category: u16,
     pub mask: u16,

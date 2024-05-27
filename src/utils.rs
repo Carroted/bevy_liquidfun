@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Debug, Reflect)]
+#[reflect(Component)]
+#[type_path = "bevy_liquidfun"]
 pub struct DebugDrawFixtures {
     pub awake_color: Color,
     pub asleep_color: Color,

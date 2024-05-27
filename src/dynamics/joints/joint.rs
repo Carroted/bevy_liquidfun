@@ -1,10 +1,12 @@
-use bevy::prelude::{Component, Entity};
+use bevy::{ecs::reflect::ReflectComponent, prelude::{Component, Entity}, reflect::Reflect};
 use libliquidfun_sys::box2d::ffi;
 
 use crate::dynamics::b2WorldImpl;
 
 #[allow(non_camel_case_types)]
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+#[type_path = "bevy_liquidfun"]
 pub struct b2Joint {
     joint_type: b2JointType,
     body_a: Entity,
@@ -59,7 +61,8 @@ pub(crate) trait SyncJointToWorld {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug)]
+#[derive(Debug, Reflect)]
+#[type_path = "bevy_liquidfun"]
 pub enum b2JointType {
     Revolute,
     Prismatic,

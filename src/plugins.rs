@@ -50,6 +50,7 @@ impl Plugin for LiquidFunPlugin {
             .register_type::<b2RevoluteJoint>()
             .register_type::<b2WeldJoint>()
             .register_type::<b2WorldSettings>()
+            .register_type::<DebugDrawFixtures>()
             .add_systems(
                 PhysicsSchedule,
                 (

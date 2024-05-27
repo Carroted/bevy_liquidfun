@@ -2,8 +2,7 @@ use std::pin::Pin;
 
 use autocxx::WithinBox;
 use bevy::{
-    prelude::{Component, Entity},
-    utils::default,
+    ecs::reflect::ReflectComponent, prelude::{Component, Entity}, reflect::Reflect, utils::default
 };
 use libliquidfun_sys::box2d::{
     ffi,
@@ -13,7 +12,9 @@ use libliquidfun_sys::box2d::{
 use crate::collision::b2Shape;
 
 #[allow(non_camel_case_types)]
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+#[type_path = "bevy_liquidfun"]
 pub struct b2Fixture {
     body: Entity,
     def: b2FixtureDef,
@@ -37,7 +38,7 @@ impl b2Fixture {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect)]
 pub struct b2FixtureDef {
     pub shape: b2Shape,
     pub density: f32,
@@ -49,7 +50,7 @@ pub struct b2FixtureDef {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Reflect)]
 pub struct b2Filter {
     pub category: u16,
     pub mask: u16,

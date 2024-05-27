@@ -1,6 +1,5 @@
 use std::{borrow::BorrowMut, ops::Deref, pin::Pin};
 
-use bevy::{prelude::*, transform::TransformSystem};
 use bevy::{prelude::*, transform::TransformSystem, utils::HashSet};
 use libliquidfun_sys::box2d::ffi::int32;
 
@@ -40,6 +39,7 @@ impl Plugin for LiquidFunPlugin {
             .register_type::<b2Body>()
             .register_type::<b2BodyType>()
             .register_type::<HashSet<Entity>>()
+            .register_type::<b2Fixture>()
             .register_type::<ExternalForce>()
             .register_type::<ExternalImpulse>()
             .register_type::<ExternalTorque>()

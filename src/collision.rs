@@ -7,7 +7,7 @@ use libliquidfun_sys::box2d::{ffi::b2Vec2, *};
 use crate::internal::*;
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect)]
 pub enum b2Shape {
     Circle {
         radius: f32,

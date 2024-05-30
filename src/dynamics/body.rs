@@ -131,7 +131,6 @@ impl b2Body {
             return;
         };
 
-        body_ptr.as_mut().SetType(self.body_type.into());
         body_ptr
             .as_mut()
             .SetTransform(&to_b2Vec2(&self.position), self.angle);
@@ -139,7 +138,6 @@ impl b2Body {
             .as_mut()
             .SetLinearVelocity(&to_b2Vec2(&self.linear_velocity));
         body_ptr.as_mut().SetAngularVelocity(self.angular_velocity);
-        body_ptr.as_mut().SetFixedRotation(self.fixed_rotation);
         body_ptr.as_mut().SetAwake(self.awake);
         body_ptr.as_mut().SetSleepingAllowed(self.allow_sleep);
     }

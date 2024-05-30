@@ -1,12 +1,41 @@
 use std::{borrow::BorrowMut, ops::Deref, pin::Pin};
 
-use bevy::{prelude::*, transform::TransformSystem, utils::HashSet};
+use bevy::{
+    ecs::component::Tick,
+    prelude::*,
+    transform::TransformSystem,
+    utils::{HashMap, HashSet},
+};
 use libliquidfun_sys::box2d::ffi::int32;
 
 use crate::{
     collision::b2Shape,
     dynamics::{
-        b2BeginContactEvent, b2BodiesInContact, b2Body, b2BodyType, b2Contact, b2Contacts, b2DistanceJoint, b2EndContactEvent, b2Fixture, b2FixturesInContact, b2Joint, b2MotorJoint, b2ParticleBodyContact, b2ParticlesInContact, b2PrismaticJoint, b2RevoluteJoint, b2WeldJoint, b2World, b2WorldSettings, ExternalForce, ExternalImpulse, ExternalTorque, GravityScale, SyncJointToWorld, ToJointPtr
+        b2BeginContactEvent,
+        b2BodiesInContact,
+        b2Body,
+        b2BodyType,
+        b2Contact,
+        b2Contacts,
+        b2DistanceJoint,
+        b2EndContactEvent,
+        b2Fixture,
+        b2FixturesInContact,
+        b2Joint,
+        b2MotorJoint,
+        b2ParticleBodyContact,
+        b2ParticlesInContact,
+        b2PrismaticJoint,
+        b2RevoluteJoint,
+        b2WeldJoint,
+        b2World,
+        b2WorldSettings,
+        ExternalForce,
+        ExternalImpulse,
+        ExternalTorque,
+        GravityScale,
+        SyncJointToWorld,
+        ToJointPtr,
     },
     internal::to_b2Vec2,
     particles::{b2ParticleGroup, b2ParticleSystem, b2ParticleSystemContacts},
@@ -126,8 +155,14 @@ impl Plugin for LiquidFunPlugin {
                     .run_if(resource_exists::<b2World>),
             )
             .init_resource::<Events<b2BeginContactEvent>>()
-            .init_resource::<Events<b2EndContactEvent>>();
+            .init_resource::<Events<b2EndContactEvent>>()
+            .init_resource::<BodyChangeTracker>();
     }
+}
+
+#[derive(Resource, Debug, Default)]
+struct BodyChangeTracker {
+    last_sync_ticks: HashMap<Entity, Tick>,
 }
 
 fn step_physics(mut b2_world: ResMut<b2World>, settings: Res<b2WorldSettings>) {
@@ -164,9 +199,13 @@ fn clear_events<T: 'static + Send + Sync + Event>(mut events: ResMut<Events<T>>)
 fn create_bodies(
     mut b2_world: ResMut<b2World>,
     mut added: Query<(Entity, &mut b2Body), Added<b2Body>>,
+    mut body_change_tracker: ResMut<BodyChangeTracker>,
 ) {
     for (entity, mut body) in added.iter_mut() {
         b2_world.inner().create_body(entity, &mut body);
+        body_change_tracker
+            .last_sync_ticks
+            .insert(entity, body.last_changed());
     }
 }
 
@@ -249,6 +288,7 @@ fn destroy_removed_bodies(
     mut b2_world: ResMut<b2World>,
     mut removed: RemovedComponents<b2Body>,
     mut commands: Commands,
+    mut body_change_tracker: ResMut<BodyChangeTracker>,
 ) {
     let mut b2_world_impl = b2_world.inner();
     for entity in removed.read() {
@@ -260,6 +300,7 @@ fn destroy_removed_bodies(
         }
 
         b2_world_impl.destroy_body_for_entity(entity);
+        body_change_tracker.last_sync_ticks.remove(&entity);
     }
 }
 
@@ -291,11 +332,19 @@ fn destroy_removed_fixtures(
 
 fn sync_bodies_to_world(
     mut b2_world: ResMut<b2World>,
-    bodies: Query<(Entity, &b2Body), Changed<b2Body>>,
+    bodies: Query<(Entity, Ref<b2Body>), Changed<b2Body>>,
+    change_tracker: Res<BodyChangeTracker>,
 ) {
     let mut b2_world_impl = b2_world.inner();
     for (entity, body) in bodies.iter() {
-        body.sync_to_world(entity, b2_world_impl.borrow_mut());
+        if let Some(last_changed_by_box2d) = change_tracker.last_sync_ticks.get(&entity) {
+            if *last_changed_by_box2d == body.last_changed() {
+                continue;
+            }
+        }
+
+        body.as_ref()
+            .sync_to_world(entity, b2_world_impl.borrow_mut());
     }
 }
 
@@ -393,10 +442,17 @@ fn apply_gravity_scale(
     }
 }
 
-fn sync_bodies_from_world(mut b2_world: ResMut<b2World>, mut bodies: Query<(Entity, &mut b2Body)>) {
+fn sync_bodies_from_world(
+    mut b2_world: ResMut<b2World>,
+    mut bodies: Query<(Entity, &mut b2Body)>,
+    mut body_change_tracker: ResMut<BodyChangeTracker>,
+) {
     let b2_world_impl = b2_world.inner();
     for (entity, mut body) in bodies.iter_mut() {
         body.sync_with_world(entity, &b2_world_impl);
+        body_change_tracker
+            .last_sync_ticks
+            .insert(entity, body.last_changed());
     }
 }
 

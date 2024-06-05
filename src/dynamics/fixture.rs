@@ -2,7 +2,10 @@ use std::pin::Pin;
 
 use autocxx::WithinBox;
 use bevy::{
-    ecs::reflect::ReflectComponent, prelude::{Component, Entity}, reflect::Reflect, utils::default
+    ecs::reflect::ReflectComponent,
+    prelude::{Component, Entity},
+    reflect::Reflect,
+    utils::default,
 };
 use libliquidfun_sys::box2d::{
     ffi,

@@ -121,7 +121,8 @@ fn create_box(commands: &mut Commands) -> Entity {
     let fixture_def = b2FixtureDef::new(box_shape, 1.);
     commands
         .spawn_body(&body_def, &fixture_def)
-        .insert(DebugDrawFixtures::default_dynamic()).id()
+        .insert(DebugDrawFixtures::default_dynamic())
+        .id()
 }
 
 fn check_keys(input: Res<ButtonInput<KeyCode>>, mut joints: Query<&mut b2PrismaticJoint>) {

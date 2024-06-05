@@ -1,4 +1,8 @@
-use bevy::{ecs::reflect::ReflectComponent, prelude::{Component, Entity}, reflect::Reflect};
+use bevy::{
+    ecs::reflect::ReflectComponent,
+    prelude::{Component, Entity},
+    reflect::Reflect,
+};
 use libliquidfun_sys::box2d::ffi;
 
 use crate::dynamics::b2WorldImpl;

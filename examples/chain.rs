@@ -84,7 +84,8 @@ fn setup_physics_bodies(mut commands: Commands) {
                 draw_up_vector: false,
                 draw_right_vector: false,
                 ..DebugDrawFixtures::default_dynamic()
-            }).id();
+            })
+            .id();
     }
 
     let joint_def = b2RevoluteJointDef {

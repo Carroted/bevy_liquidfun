@@ -221,6 +221,7 @@ pub struct b2RayCastHit {
 pub struct b2RayCastFilter {
     excluded_bodies: Option<HashSet<Entity>>,
     allowed_categories: Option<u16>,
+    ignore_sensors: bool,
 }
 
 impl b2RayCastFilter {
@@ -265,6 +266,11 @@ impl b2RayCastFilter {
         self
     }
 
+    pub fn ignore_sensors(mut self) -> Self {
+        self.ignore_sensors = true;
+        self
+    }
+
     fn should_use(
         &self,
         body_entity: Entity,
@@ -283,6 +289,10 @@ impl b2RayCastFilter {
             if allowed_categories & u16::from(filter_data.categoryBits) == 0 {
                 return false;
             }
+        }
+
+        if self.ignore_sensors && fixture.as_ref().IsSensor() {
+            return false;
         }
 
         return true;

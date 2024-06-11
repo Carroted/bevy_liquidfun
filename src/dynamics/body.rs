@@ -14,7 +14,7 @@ use crate::{
 };
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Default, Copy, Clone, Reflect)]
+#[derive(Debug, Default, Copy, Clone, Reflect, PartialEq)]
 #[cfg_attr(
     feature = "bevy-inspector-egui",
     derive(bevy_inspector_egui::inspector_options::InspectorOptions)

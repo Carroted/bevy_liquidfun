@@ -1,7 +1,7 @@
 use std::{borrow::BorrowMut, ops::Deref, pin::Pin};
 
 use bevy::{
-    ecs::component::Tick,
+    ecs::{component::Tick, schedule::InternedSystemSet},
     prelude::*,
     transform::TransformSystem,
     utils::{HashMap, HashSet},
@@ -52,17 +52,28 @@ use crate::{
 #[derive(Default)]
 pub struct LiquidFunPlugin {
     settings: b2WorldSettings,
+    set_to_run_in: Option<InternedSystemSet>,
 }
 
 impl LiquidFunPlugin {
-    pub fn new(settings: b2WorldSettings) -> LiquidFunPlugin {
-        LiquidFunPlugin { settings }
+    pub fn new(settings: b2WorldSettings) -> Self {
+        Self {
+            settings,
+            set_to_run_in: None,
+        }
+    }
+
+    pub fn new_with_set(settings: b2WorldSettings, set_to_run_in: impl SystemSet) -> Self {
+        Self {
+            settings,
+            set_to_run_in: Some(set_to_run_in.intern()),
+        }
     }
 }
 
 impl Plugin for LiquidFunPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(LiquidFunSchedulePlugin)
+        app.add_plugins(LiquidFunSchedulePlugin::new(self.set_to_run_in))
             .insert_resource(self.settings.clone())
             .init_resource::<b2Contacts>()
             .register_type::<b2Body>()

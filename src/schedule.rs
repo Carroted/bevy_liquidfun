@@ -1,6 +1,10 @@
 use std::time::Duration;
 
-use bevy::{ecs::schedule::ScheduleLabel, prelude::*, transform::TransformSystem};
+use bevy::{
+    ecs::schedule::{InternedSystemSet, ScheduleLabel},
+    prelude::*,
+    transform::TransformSystem,
+};
 
 use crate::dynamics::b2WorldSettings;
 
@@ -24,7 +28,20 @@ pub struct PhysicsTime;
 #[derive(Debug, Hash, PartialEq, Eq, Clone, ScheduleLabel)]
 pub struct PhysicsSchedule;
 
-pub struct LiquidFunSchedulePlugin;
+#[derive(SystemSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+struct DefaultSystemSet;
+
+pub struct LiquidFunSchedulePlugin {
+    pub set_to_run_in: InternedSystemSet,
+}
+
+impl LiquidFunSchedulePlugin {
+    pub fn new(set_to_run_in: Option<InternedSystemSet>) -> Self {
+        Self {
+            set_to_run_in: set_to_run_in.unwrap_or(DefaultSystemSet.intern()),
+        }
+    }
+}
 
 impl Plugin for LiquidFunSchedulePlugin {
     fn build(&self, app: &mut App) {
@@ -33,7 +50,9 @@ impl Plugin for LiquidFunSchedulePlugin {
 
         app.configure_sets(
             Update,
-            PhysicsUpdate.before(TransformSystem::TransformPropagate),
+            PhysicsUpdate
+                .in_set(self.set_to_run_in)
+                .before(TransformSystem::TransformPropagate),
         );
 
         app.edit_schedule(PhysicsSchedule, |physics_schedule| {

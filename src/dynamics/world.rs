@@ -220,7 +220,6 @@ impl b2WorldImpl {
 
     pub(crate) fn destroy_joint(&mut self, entity: Entity) {
         let Some(joint_ptr) = self.joint_ptrs.remove(&entity) else {
-            warn!("Cannot find joint pointer!");
             return;
         };
 

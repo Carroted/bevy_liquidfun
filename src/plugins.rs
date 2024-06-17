@@ -100,7 +100,14 @@ impl Plugin for LiquidFunPlugin {
                         clear_torques,
                         clear_events::<b2BeginContactEvent>,
                         clear_events::<b2EndContactEvent>,
+                        (
+                            destroy_removed_joints,
+                            destroy_removed_fixtures,
+                            destroy_removed_bodies,
+                        )
+                            .chain(),
                     )
+                        .run_if(resource_exists::<b2World>)
                         .in_set(PhysicsUpdateStep::ClearEvents),
                     (
                         create_bodies,
@@ -163,6 +170,15 @@ impl Plugin for LiquidFunPlugin {
                 update_transforms
                     .after(PhysicsUpdate)
                     .before(TransformSystem::TransformPropagate)
+                    .run_if(resource_exists::<b2World>),
+            )
+            .add_systems(
+                Last,
+                (
+                    destroy_removed_joints,
+                    destroy_removed_fixtures,
+                    destroy_removed_bodies,
+                )
                     .run_if(resource_exists::<b2World>),
             )
             .init_resource::<Events<b2BeginContactEvent>>()

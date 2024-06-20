@@ -322,10 +322,12 @@ fn destroy_removed_bodies(
         let fixture_entities = b2_world_impl.get_fixtures_attached_to_entity(&entity);
         if let Some(fixture_entities) = fixture_entities {
             fixture_entities.iter().for_each(|fixture_entity| {
-                if let Some(fixture_entity) = commands.get_entity(*fixture_entity) {
+                if *fixture_entity == entity {
+                    // fixture was on same entity as body, this is ok
+                } else if let Some(fixture_entity) = commands.get_entity(*fixture_entity) {
                     fixture_entity.despawn_recursive();
                 } else {
-                    warn!("Destroyed fixture entity found");
+                    warn!("Destroyed fixture entity found: {fixture_entity:?}");
                 }
             });
         }

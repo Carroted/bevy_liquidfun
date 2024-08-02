@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{color::palettes::css::{DARK_GRAY, GREEN, MIDNIGHT_BLUE, ORANGE}, prelude::*};
 
 #[derive(Component, Clone, Debug, Reflect)]
 #[reflect(Component)]
@@ -17,8 +17,8 @@ pub struct DebugDrawFixtures {
 impl Default for DebugDrawFixtures {
     fn default() -> Self {
         Self {
-            awake_color: Color::GREEN,
-            asleep_color: Color::DARK_GRAY,
+            awake_color: GREEN.into(),
+            asleep_color: DARK_GRAY.into(),
             pivot_scale: 0.1,
             draw_pivot: false,
             vector_scale: 1.,
@@ -38,11 +38,11 @@ impl DebugDrawFixtures {
     }
 
     pub fn default_static() -> Self {
-        Self::splat(Color::MIDNIGHT_BLUE)
+        Self::splat(MIDNIGHT_BLUE.into())
     }
     pub fn default_dynamic() -> Self {
         Self {
-            awake_color: Color::ORANGE,
+            awake_color: ORANGE.into(),
             draw_up_vector: true,
             draw_right_vector: true,
             ..default()

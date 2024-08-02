@@ -4,7 +4,7 @@ extern crate rand;
 
 use std::f32::consts::PI;
 
-use bevy::{input::prelude::*, prelude::*};
+use bevy::{color::palettes::css::{ORANGE_RED, WHITE}, input::prelude::*, prelude::*};
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{
@@ -107,7 +107,7 @@ fn setup_instructions(mut commands: Commands) {
             "",
             TextStyle {
                 font_size: 20.0,
-                color: Color::WHITE,
+                color: WHITE.into(),
                 ..default()
             },
         )
@@ -131,7 +131,7 @@ fn update_instructions(mode: Res<RayCastMode>, mut text: Query<&mut Text>) {
             instruction_text,
             TextStyle {
                 font_size: 20.0,
-                color: Color::WHITE,
+                color: WHITE.into(),
                 ..default()
             },
         );
@@ -235,7 +235,7 @@ fn cast_ray(
     let angle = time.elapsed_seconds() / PI;
     const RAY_LENGTH: f32 = 11.;
     let ray_end = ray_start + Vec2::new(RAY_LENGTH * f32::cos(angle), RAY_LENGTH * f32::sin(angle));
-    gizmos.line_2d(ray_start, ray_end, Color::WHITE);
+    gizmos.line_2d(ray_start, ray_end, WHITE);
 
     let filter = b2RayCastFilter::allow_categories(!2u16);
     match mode.as_ref() {
@@ -243,21 +243,21 @@ fn cast_ray(
             let callback = b2RayCastClosest::new();
             let hit = b2_world.ray_cast_with_filter(callback, filter, &ray_start, &ray_end);
             if let Some(hit) = hit {
-                gizmos.line_2d(hit.point, hit.point + hit.normal, Color::ORANGE_RED);
+                gizmos.line_2d(hit.point, hit.point + hit.normal, ORANGE_RED);
             }
         }
         RayCastMode::Any => {
             let callback = b2RayCastAny::new();
             let hit = b2_world.ray_cast_with_filter(callback, filter, &ray_start, &ray_end);
             if let Some(hit) = hit {
-                gizmos.line_2d(hit.point, hit.point + hit.normal, Color::ORANGE_RED);
+                gizmos.line_2d(hit.point, hit.point + hit.normal, ORANGE_RED);
             }
         }
         RayCastMode::All => {
             let callback = b2RayCastAll::new();
             let hits = b2_world.ray_cast_with_filter(callback, filter, &ray_start, &ray_end);
             for hit in hits {
-                gizmos.line_2d(hit.point, hit.point + hit.normal, Color::ORANGE_RED);
+                gizmos.line_2d(hit.point, hit.point + hit.normal, ORANGE_RED);
             }
         }
     };

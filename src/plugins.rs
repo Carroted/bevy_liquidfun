@@ -1,10 +1,7 @@
 use std::{borrow::BorrowMut, ops::Deref, pin::Pin};
 
 use bevy::{
-    ecs::{component::Tick, schedule::InternedSystemSet},
-    prelude::*,
-    transform::TransformSystem,
-    utils::{HashMap, HashSet},
+    color::palettes::css::{GREEN, RED}, ecs::{component::Tick, schedule::InternedSystemSet}, prelude::*, transform::TransformSystem, utils::{HashMap, HashSet}
 };
 use libliquidfun_sys::box2d::ffi::int32;
 
@@ -743,7 +740,7 @@ fn draw_fixtures(
             gizmos.line_2d(
                 body.position,
                 body.position + transform.up().truncate() * debug_draw_fixtures.vector_scale,
-                Color::GREEN,
+                GREEN,
             );
         }
 
@@ -751,7 +748,7 @@ fn draw_fixtures(
             gizmos.line_2d(
                 body.position,
                 body.position + transform.right().truncate() * debug_draw_fixtures.vector_scale,
-                Color::RED,
+                RED,
             );
         }
     }

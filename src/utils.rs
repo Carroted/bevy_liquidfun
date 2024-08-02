@@ -1,4 +1,7 @@
-use bevy::{color::palettes::css::{DARK_GRAY, GREEN, MIDNIGHT_BLUE, ORANGE}, prelude::*};
+use bevy::{
+    color::palettes::css::{DARK_GRAY, GREEN, MIDNIGHT_BLUE, ORANGE},
+    prelude::*,
+};
 
 #[derive(Component, Clone, Debug, Reflect)]
 #[reflect(Component)]

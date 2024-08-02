@@ -4,7 +4,11 @@ extern crate rand;
 
 use std::f32::consts::PI;
 
-use bevy::{color::palettes::css::{ORANGE_RED, WHITE}, input::prelude::*, prelude::*};
+use bevy::{
+    color::palettes::css::{ORANGE_RED, WHITE},
+    input::prelude::*,
+    prelude::*,
+};
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{

@@ -1,7 +1,11 @@
 use std::{borrow::BorrowMut, ops::Deref, pin::Pin};
 
 use bevy::{
-    color::palettes::css::{GREEN, RED}, ecs::{component::Tick, schedule::InternedSystemSet}, prelude::*, transform::TransformSystem, utils::{HashMap, HashSet}
+    color::palettes::css::{GREEN, RED},
+    ecs::{component::Tick, schedule::InternedSystemSet},
+    prelude::*,
+    transform::TransformSystem,
+    utils::{HashMap, HashSet},
 };
 use libliquidfun_sys::box2d::ffi::int32;
 

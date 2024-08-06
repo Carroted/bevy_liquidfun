@@ -68,6 +68,43 @@ impl b2Shape {
         b2Shape::Polygon { vertices }
     }
 
+    pub fn with_applied_transform(&self, transform: &Transform) -> b2Shape {
+        match self {
+            b2Shape::Circle { radius, position } => b2Shape::Circle {
+                radius: radius * transform.scale.x,
+                position: *position + transform.translation.xy(),
+            },
+            b2Shape::EdgeTwoSided { v1, v2 } => b2Shape::EdgeTwoSided {
+                v1: transform_point(*v1, transform),
+                v2: transform_point(*v2, transform),
+            },
+            b2Shape::Polygon { vertices } => b2Shape::Polygon {
+                vertices: vertices
+                    .iter()
+                    .map(|v| transform_point(*v, transform))
+                    .collect(),
+            },
+            b2Shape::Chain {
+                vertices,
+                prev_vertex,
+                next_vertex,
+            } => b2Shape::Chain {
+                vertices: vertices
+                    .iter()
+                    .map(|v| transform_point(*v, transform))
+                    .collect(),
+                prev_vertex: transform_point(*prev_vertex, transform),
+                next_vertex: transform_point(*next_vertex, transform),
+            },
+            b2Shape::ChainLoop { vertices } => b2Shape::ChainLoop {
+                vertices: vertices
+                    .iter()
+                    .map(|v| transform_point(*v, transform))
+                    .collect(),
+            },
+        }
+    }
+
     pub(crate) fn to_ffi<'a>(&self) -> &'a ffi::b2Shape {
         match self {
             b2Shape::Circle { radius, position } => circle_to_ffi(*radius, *position),
@@ -81,6 +118,10 @@ impl b2Shape {
             b2Shape::ChainLoop { vertices } => chain_loop_to_ffi(vertices),
         }
     }
+}
+
+fn transform_point(point: Vec2, transform: &Transform) -> Vec2 {
+    transform.transform_point(point.extend(0.)).xy()
 }
 
 impl Default for b2Shape {

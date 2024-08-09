@@ -11,7 +11,7 @@ use bevy_liquidfun::{
         b2BodyCommands,
         b2BodyDef,
         b2BodyType::Dynamic,
-        b2FixtureDef,
+        b2Fixture,
         b2Joint,
         b2RevoluteJoint,
         b2RevoluteJointDef,
@@ -85,7 +85,7 @@ fn setup_box(mut commands: Commands) {
             &box_def,
             &shapes
                 .into_iter()
-                .map(|shape| b2FixtureDef::new(shape, 5.))
+                .map(|shape| b2Fixture::new(shape, 5.))
                 .collect(),
             |fixture| {
                 fixture.insert(DebugDrawFixtures::default_static());

@@ -4,7 +4,7 @@ extern crate bevy_liquidfun;
 use bevy::prelude::*;
 use bevy_liquidfun::{
     collision::b2Shape,
-    dynamics::{b2BodyCommands, b2BodyDef, b2FixtureDef, b2ParticlesInContact, b2World},
+    dynamics::{b2BodyCommands, b2BodyDef, b2Fixture, b2ParticlesInContact, b2World},
     particles::{
         b2ParticleFlags,
         b2ParticleGroup,
@@ -54,7 +54,7 @@ fn setup_physics_world(mut commands: Commands) {
 fn setup(mut commands: Commands) {
     // ground
     {
-        let fixture_def = b2FixtureDef::new(
+        let fixture = b2Fixture::new(
             b2Shape::EdgeTwoSided {
                 v1: Vec2::new(-40., 0.),
                 v2: Vec2::new(40., 0.),
@@ -62,7 +62,7 @@ fn setup(mut commands: Commands) {
             0.0,
         );
         commands
-            .spawn_body(&b2BodyDef::default(), &fixture_def)
+            .spawn_body(&b2BodyDef::default(), fixture)
             .insert(DebugDrawFixtures::default_static());
     }
 
@@ -73,13 +73,13 @@ fn setup(mut commands: Commands) {
             position: Vec2::new(0.0, 10.0),
         };
 
-        let fixture_def = b2FixtureDef {
+        let fixture = b2Fixture {
             shape,
             is_sensor: true,
             ..default()
         };
         commands
-            .spawn_body(&b2BodyDef::default(), &fixture_def)
+            .spawn_body(&b2BodyDef::default(), fixture)
             .insert((
                 DebugDrawFixtures::default_static(),
                 b2ParticlesInContact::default(),

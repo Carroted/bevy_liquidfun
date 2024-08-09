@@ -251,7 +251,7 @@ impl b2WorldImpl {
         let (body_entity, body_fixtures) = body;
 
         let mut body_ptr = self.body_ptr_mut(body_entity).unwrap();
-        let mut b2fixture_def = fixture_component.def().to_ffi();
+        let mut b2fixture_def = fixture_component.to_ffi();
         let fixture_entity_ptr = fixture_entity.to_bits() as usize;
         b2fixture_def.as_mut().userData.pointer = fixture_entity_ptr;
 

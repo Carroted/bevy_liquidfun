@@ -8,13 +8,7 @@ use bevy::prelude::*;
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{
-        b2BeginContactEvent,
-        b2Body,
-        b2BodyCommands,
-        b2BodyDef,
-        b2BodyType::Dynamic,
-        b2FixtureDef,
-        b2World,
+        b2BeginContactEvent, b2Body, b2BodyCommands, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2World
     },
     plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
     schedule::{PhysicsSchedule, PhysicsUpdateStep},
@@ -62,7 +56,7 @@ fn setup_physics_world(mut commands: Commands) {
 
 fn setup_bodies(mut commands: Commands) {
     {
-        let fixture_def = b2FixtureDef::new(
+        let fixture = b2Fixture::new(
             b2Shape::EdgeTwoSided {
                 v1: Vec2::new(-50., 0.),
                 v2: Vec2::new(50., 0.),
@@ -70,7 +64,7 @@ fn setup_bodies(mut commands: Commands) {
             0.,
         );
         commands
-            .spawn_body(&b2BodyDef::default(), &fixture_def)
+            .spawn_body(&b2BodyDef::default(), fixture)
             .insert(DebugDrawFixtures::default_static());
     }
 
@@ -143,7 +137,7 @@ fn create_body_in_random_position(
                 ),
                 ..default()
             },
-            &b2FixtureDef::new(shape, 1.0),
+            b2Fixture::new(shape, 1.0),
         )
         .insert(DebugDrawFixtures::default_dynamic());
 }

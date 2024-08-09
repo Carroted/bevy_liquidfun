@@ -5,14 +5,7 @@ use bevy::prelude::*;
 use bevy_liquidfun::{
     collision::b2Shape,
     dynamics::{
-        b2BodyCommands,
-        b2BodyDef,
-        b2BodyType::Dynamic,
-        b2FixtureDef,
-        b2MotorJoint,
-        b2MotorJointDef,
-        b2World,
-        CreateMotorJoint,
+        b2BodyCommands, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2MotorJoint, b2MotorJointDef, b2World, CreateMotorJoint
     },
     plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
     schedule::PhysicsSchedule,
@@ -102,7 +95,7 @@ fn setup_physics_bodies(mut commands: Commands) {
 }
 
 fn create_ground(commands: &mut Commands) -> Entity {
-    let fixture_def = b2FixtureDef::new(
+    let fixture = b2Fixture::new(
         b2Shape::EdgeTwoSided {
             v1: Vec2::new(-20., 0.),
             v2: Vec2::new(20., 0.),
@@ -110,7 +103,7 @@ fn create_ground(commands: &mut Commands) -> Entity {
         0.,
     );
     commands
-        .spawn_body(&b2BodyDef::default(), &fixture_def)
+        .spawn_body(&b2BodyDef::default(), fixture)
         .insert(DebugDrawFixtures::default_static())
         .id()
 }
@@ -123,7 +116,7 @@ fn create_box(commands: &mut Commands) -> Entity {
         ..default()
     };
     let shape = b2Shape::create_box(2.0, 0.5);
-    let fixture_def = b2FixtureDef {
+    let fixture = b2Fixture {
         shape,
         friction: 0.6,
         density: 2.0,
@@ -131,7 +124,7 @@ fn create_box(commands: &mut Commands) -> Entity {
     };
 
     commands
-        .spawn_body(&body_def, &fixture_def)
+        .spawn_body(&body_def, fixture)
         .insert(DebugDrawFixtures::default_dynamic())
         .id()
 }

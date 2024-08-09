@@ -7,7 +7,7 @@ use libliquidfun_sys::box2d::{
     ffi::b2BodyType::{b2_dynamicBody, b2_kinematicBody, b2_staticBody},
 };
 
-use super::{b2Fixture, b2FixtureDef};
+use super::b2Fixture;
 use crate::{
     dynamics::b2WorldImpl,
     internal::{to_Vec2, to_b2Vec2},
@@ -351,39 +351,31 @@ impl GravityScale {
 
 #[allow(non_camel_case_types)]
 pub trait b2BodyCommands {
-    fn spawn_body(
-        &mut self,
-        body_def: &b2BodyDef,
-        fixture_def: &b2FixtureDef,
-    ) -> EntityCommands<'_>;
+    fn spawn_body(&mut self, body_def: &b2BodyDef, fixture_def: b2Fixture) -> EntityCommands<'_>;
 
     fn spawn_multi_fixture_body(
         &mut self,
         body_def: &b2BodyDef,
-        fixture_defs: &Vec<b2FixtureDef>,
+        fixture_defs: &Vec<b2Fixture>,
         fixture_builder: fn(&mut EntityCommands),
     ) -> EntityCommands<'_>;
 }
 
 impl b2BodyCommands for Commands<'_, '_> {
-    fn spawn_body(
-        &mut self,
-        body_def: &b2BodyDef,
-        fixture_def: &b2FixtureDef,
-    ) -> EntityCommands<'_> {
-        self.spawn((b2BodyBundle::new(body_def), b2Fixture::new(fixture_def)))
+    fn spawn_body(&mut self, body_def: &b2BodyDef, fixture_def: b2Fixture) -> EntityCommands<'_> {
+        self.spawn((b2BodyBundle::new(body_def), fixture_def))
     }
 
     fn spawn_multi_fixture_body(
         &mut self,
         body_def: &b2BodyDef,
-        fixture_defs: &Vec<b2FixtureDef>,
+        fixture_defs: &Vec<b2Fixture>,
         fixture_builder: fn(&mut EntityCommands),
     ) -> EntityCommands<'_> {
         let mut entity_commands = self.spawn(b2BodyBundle::new(body_def));
         entity_commands.with_children(|builder| {
             for fixture in fixture_defs {
-                fixture_builder(&mut builder.spawn(b2Fixture::new(fixture)));
+                fixture_builder(&mut builder.spawn(fixture.clone()));
             }
         });
         entity_commands

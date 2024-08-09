@@ -742,7 +742,7 @@ fn draw_fixtures(
         } else {
             debug_draw_fixtures.asleep_color
         };
-        let shape = &fixture.def().shape;
+        let shape = &fixture.shape;
         match shape {
             b2Shape::Circle { radius, position } => {
                 gizmos.circle_2d(to_global(transform, *position), *radius, color);

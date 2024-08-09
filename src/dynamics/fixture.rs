@@ -2,7 +2,10 @@ use std::pin::Pin;
 
 use autocxx::WithinBox;
 use bevy::{
-    ecs::{entity::{EntityMapper, MapEntities}, reflect::ReflectComponent},
+    ecs::{
+        entity::{EntityMapper, MapEntities},
+        reflect::ReflectComponent,
+    },
     prelude::{Component, Entity},
     reflect::Reflect,
     utils::default,
@@ -15,54 +18,10 @@ use libliquidfun_sys::box2d::{
 use crate::collision::b2Shape;
 
 #[allow(non_camel_case_types)]
-#[derive(Component, Debug, Reflect)]
+#[derive(Component, Clone, Debug, Reflect)]
 #[reflect(Component)]
 #[type_path = "bevy_liquidfun"]
 pub struct b2Fixture {
-    def: b2FixtureDef,
-}
-
-impl b2Fixture {
-    pub fn new(fixture_def: &b2FixtureDef) -> Self {
-        b2Fixture {
-            def: (*fixture_def).clone(),
-        }
-    }
-    pub fn def(&self) -> &b2FixtureDef {
-        &self.def
-    }
-}
-
-#[allow(non_camel_case_types)]
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-#[type_path = "bevy_liquidfun"]
-pub struct b2FixtureBody {
-    pub(crate) body: Entity,
-}
-
-impl b2FixtureBody {
-    pub(crate) fn new(body: Entity) -> Self {
-        Self {
-            body
-        }
-    }
-
-    pub fn body(&self) -> Entity {
-        self.body
-    }
-}
-
-impl MapEntities for b2FixtureBody {
-    fn map_entities<M: EntityMapper>(&mut self, entity_mapper: &mut M) {
-        self.body = entity_mapper.map_entity(self.body);
-    }
-}
-
-#[allow(non_camel_case_types)]
-#[derive(Debug, Clone, Reflect)]
-#[type_path = "bevy_liquidfun"]
-pub struct b2FixtureDef {
     pub shape: b2Shape,
     pub density: f32,
     pub friction: f32,
@@ -72,18 +31,9 @@ pub struct b2FixtureDef {
     pub filter: b2Filter,
 }
 
-#[allow(non_camel_case_types)]
-#[derive(Debug, Copy, Clone, Reflect)]
-#[type_path = "bevy_liquidfun"]
-pub struct b2Filter {
-    pub category: u16,
-    pub mask: u16,
-    pub group_index: i16,
-}
-
-impl b2FixtureDef {
+impl b2Fixture {
     pub fn new(shape: b2Shape, density: f32) -> Self {
-        b2FixtureDef {
+        b2Fixture {
             shape,
             density,
             ..default()
@@ -105,9 +55,9 @@ impl b2FixtureDef {
     }
 }
 
-impl Default for b2FixtureDef {
+impl Default for b2Fixture {
     fn default() -> Self {
-        b2FixtureDef {
+        b2Fixture {
             shape: b2Shape::default(),
             density: 0.,
             friction: 0.2,
@@ -117,6 +67,39 @@ impl Default for b2FixtureDef {
             filter: b2Filter::default(),
         }
     }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+#[type_path = "bevy_liquidfun"]
+pub struct b2FixtureBody {
+    pub(crate) body: Entity,
+}
+
+impl b2FixtureBody {
+    pub(crate) fn new(body: Entity) -> Self {
+        Self { body }
+    }
+
+    pub fn body(&self) -> Entity {
+        self.body
+    }
+}
+
+impl MapEntities for b2FixtureBody {
+    fn map_entities<M: EntityMapper>(&mut self, entity_mapper: &mut M) {
+        self.body = entity_mapper.map_entity(self.body);
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone, Reflect)]
+#[type_path = "bevy_liquidfun"]
+pub struct b2Filter {
+    pub category: u16,
+    pub mask: u16,
+    pub group_index: i16,
 }
 
 impl Default for b2Filter {

@@ -4,7 +4,7 @@ extern crate bevy_liquidfun;
 use bevy::prelude::*;
 use bevy_liquidfun::{
     collision::b2Shape,
-    dynamics::{b2BodyCommands, b2BodyDef, b2BodyType::Dynamic, b2FixtureDef, b2World},
+    dynamics::{b2BodyCommands, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2World},
     particles::{
         b2ParticleFlags,
         b2ParticleGroup,
@@ -89,7 +89,7 @@ fn setup_ground(mut commands: Commands) {
             &b2BodyDef::default(),
             &shapes
                 .into_iter()
-                .map(|shape| b2FixtureDef::new(shape, 0.))
+                .map(|shape| b2Fixture::new(shape, 0.))
                 .collect(),
             |e| {
                 e.insert(DebugDrawFixtures::default_static());
@@ -108,9 +108,9 @@ fn setup_circle(mut commands: Commands) {
         radius: 0.5,
         position: Vec2::default(),
     };
-    let fixture_def = b2FixtureDef::new(circle_shape, 0.5);
+    let fixture = b2Fixture::new(circle_shape, 0.5);
     commands
-        .spawn_body(&body_def, &fixture_def)
+        .spawn_body(&body_def, fixture)
         .insert(DebugDrawFixtures::default_dynamic());
 }
 

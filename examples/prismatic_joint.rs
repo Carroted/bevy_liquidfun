@@ -10,7 +10,7 @@ use bevy_liquidfun::{
         b2BodyCommands,
         b2BodyDef,
         b2BodyType::Dynamic,
-        b2FixtureDef,
+        b2Fixture,
         b2PrismaticJoint,
         b2PrismaticJointDef,
         b2World,
@@ -96,7 +96,7 @@ fn setup_physics_bodies(mut commands: Commands) {
 }
 
 fn create_ground(commands: &mut Commands) -> Entity {
-    let fixture_def = b2FixtureDef::new(
+    let fixture = b2Fixture::new(
         b2Shape::EdgeTwoSided {
             v1: Vec2::new(-40., 0.),
             v2: Vec2::new(40., 0.),
@@ -104,7 +104,7 @@ fn create_ground(commands: &mut Commands) -> Entity {
         0.,
     );
     commands
-        .spawn_body(&b2BodyDef::default(), &fixture_def)
+        .spawn_body(&b2BodyDef::default(), fixture)
         .insert(DebugDrawFixtures::default_static())
         .id()
 }
@@ -118,9 +118,9 @@ fn create_box(commands: &mut Commands) -> Entity {
         ..default()
     };
     let box_shape = b2Shape::create_box(1.0, 1.0);
-    let fixture_def = b2FixtureDef::new(box_shape, 1.);
+    let fixture = b2Fixture::new(box_shape, 1.);
     commands
-        .spawn_body(&body_def, &fixture_def)
+        .spawn_body(&body_def, fixture)
         .insert(DebugDrawFixtures::default_dynamic())
         .id()
 }

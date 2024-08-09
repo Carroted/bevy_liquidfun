@@ -16,7 +16,7 @@ use bevy_liquidfun::{
         b2BodyDef,
         b2BodyType::Dynamic,
         b2Filter,
-        b2FixtureDef,
+        b2Fixture,
         b2RayCastAll,
         b2RayCastAny,
         b2RayCastClosest,
@@ -150,7 +150,7 @@ fn setup_physics_world(mut commands: Commands) {
 
 fn setup_ground(mut commands: Commands) {
     {
-        let fixture_def = b2FixtureDef::new(
+        let fixture = b2Fixture::new(
             b2Shape::EdgeTwoSided {
                 v1: Vec2::new(-40., 0.),
                 v2: Vec2::new(40., 0.),
@@ -158,7 +158,7 @@ fn setup_ground(mut commands: Commands) {
             0.,
         );
         commands
-            .spawn_body(&b2BodyDef::default(), &fixture_def)
+            .spawn_body(&b2BodyDef::default(), fixture)
             .insert(DebugDrawFixtures::default_static());
     }
 }
@@ -197,7 +197,7 @@ fn create_body(shape: &b2Shape, mut commands: Commands, filter_category: u16) {
         angle: rng.gen_range(-PI..=PI),
         ..default()
     };
-    let fixture_def = b2FixtureDef {
+    let fixture = b2Fixture {
         shape: shape.clone(),
         density: 1.0,
         friction: 0.3,
@@ -208,7 +208,7 @@ fn create_body(shape: &b2Shape, mut commands: Commands, filter_category: u16) {
         ..default()
     };
     commands
-        .spawn_body(&body_def, &fixture_def)
+        .spawn_body(&body_def, fixture)
         .insert((AllowDestroy, DebugDrawFixtures::default_dynamic()));
 }
 

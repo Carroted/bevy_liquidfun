@@ -4,7 +4,7 @@ extern crate bevy_liquidfun;
 use bevy::prelude::*;
 use bevy_liquidfun::{
     collision::b2Shape,
-    dynamics::{b2BodyCommands, b2BodyDef, b2BodyType::Dynamic, b2FixtureDef, b2World},
+    dynamics::{b2BodyCommands, b2BodyDef, b2BodyType::Dynamic, b2Fixture, b2World},
     plugins::{LiquidFunDebugDrawPlugin, LiquidFunPlugin},
     utils::DebugDrawFixtures,
 };
@@ -48,7 +48,7 @@ fn setup_physics_world(world: &mut World) {
 
 fn setup_physics_bodies(mut commands: Commands) {
     {
-        let fixture_def = b2FixtureDef::new(
+        let fixture = b2Fixture::new(
             b2Shape::EdgeTwoSided {
                 v1: Vec2::new(-40., 0.),
                 v2: Vec2::new(40., 0.),
@@ -56,7 +56,7 @@ fn setup_physics_bodies(mut commands: Commands) {
             0.,
         );
         commands
-            .spawn_body(&b2BodyDef::default(), &fixture_def)
+            .spawn_body(&b2BodyDef::default(), fixture)
             .insert(DebugDrawFixtures::default_static());
     }
 
@@ -64,7 +64,6 @@ fn setup_physics_bodies(mut commands: Commands) {
         radius: 1.,
         position: Vec2::ZERO,
     };
-    let fixture_def = b2FixtureDef::new(circle_shape, 1.);
     for i in 0..10 {
         let body_def = b2BodyDef {
             body_type: Dynamic,
@@ -72,7 +71,7 @@ fn setup_physics_bodies(mut commands: Commands) {
             ..default()
         };
         commands
-            .spawn_body(&body_def, &fixture_def)
+            .spawn_body(&body_def, b2Fixture::new(circle_shape.clone(), 1.))
             .insert(DebugDrawFixtures::default_dynamic());
     }
 }

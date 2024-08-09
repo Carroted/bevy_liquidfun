@@ -52,8 +52,6 @@ impl Into<ffi::b2BodyType> for b2BodyType {
 #[reflect(Component)]
 #[type_path = "bevy_liquidfun"]
 pub struct b2Body {
-    pub(crate) fixtures: Vec<Entity>,
-
     pub body_type: b2BodyType,
     pub position: Vec2,
     pub angle: f32,
@@ -69,7 +67,6 @@ pub struct b2Body {
 impl Default for b2Body {
     fn default() -> Self {
         Self {
-            fixtures: Default::default(),
             body_type: b2BodyType::default(),
             position: Vec2::ZERO,
             angle: 0.,
@@ -83,22 +80,9 @@ impl Default for b2Body {
     }
 }
 
-impl MapEntities for b2Body {
-    fn map_entities<M: EntityMapper>(&mut self, entity_mapper: &mut M) {
-        let mut new_fixtures = Vec::with_capacity(self.fixtures.len());
-        new_fixtures.extend(
-            self.fixtures
-                .iter()
-                .map(|entity| entity_mapper.map_entity(*entity)),
-        );
-        self.fixtures = new_fixtures;
-    }
-}
-
 impl b2Body {
     pub fn new(body_def: &b2BodyDef) -> Self {
         b2Body {
-            fixtures: Default::default(),
             body_type: body_def.body_type,
             position: body_def.position,
             angle: body_def.angle,
@@ -145,9 +129,37 @@ impl b2Body {
     pub fn mass(&self) -> f32 {
         self.mass
     }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+#[type_path = "bevy_liquidfun"]
+pub struct b2BodyFixtures {
+    pub(crate) fixtures: Vec<Entity>,
+}
+
+impl b2BodyFixtures {
+    pub(crate) fn new() -> Self {
+        Self {
+            fixtures: Vec::new(),
+        }
+    }
 
     pub fn fixtures(&self) -> &Vec<Entity> {
         &self.fixtures
+    }
+}
+
+impl MapEntities for b2BodyFixtures {
+    fn map_entities<M: EntityMapper>(&mut self, entity_mapper: &mut M) {
+        let mut new_fixtures = Vec::with_capacity(self.fixtures.len());
+        new_fixtures.extend(
+            self.fixtures
+                .iter()
+                .map(|entity| entity_mapper.map_entity(*entity)),
+        );
+        self.fixtures = new_fixtures;
     }
 }
 
@@ -359,10 +371,7 @@ impl b2BodyCommands for Commands<'_, '_> {
         body_def: &b2BodyDef,
         fixture_def: &b2FixtureDef,
     ) -> EntityCommands<'_> {
-        let mut entity = self.spawn_empty();
-        let id = entity.id();
-        entity.insert((b2BodyBundle::new(body_def), b2Fixture::new(id, fixture_def)));
-        entity
+        self.spawn((b2BodyBundle::new(body_def), b2Fixture::new(fixture_def)))
     }
 
     fn spawn_multi_fixture_body(
@@ -371,14 +380,12 @@ impl b2BodyCommands for Commands<'_, '_> {
         fixture_defs: &Vec<b2FixtureDef>,
         fixture_builder: fn(&mut EntityCommands),
     ) -> EntityCommands<'_> {
-        let mut entity = self.spawn_empty();
-        let id = entity.id();
-        entity.insert(b2BodyBundle::new(body_def));
-        entity.with_children(|builder| {
+        let mut entity_commands = self.spawn(b2BodyBundle::new(body_def));
+        entity_commands.with_children(|builder| {
             for fixture in fixture_defs {
-                fixture_builder(&mut builder.spawn(b2Fixture::new(id, fixture)));
+                fixture_builder(&mut builder.spawn(b2Fixture::new(fixture)));
             }
         });
-        entity
+        entity_commands
     }
 }

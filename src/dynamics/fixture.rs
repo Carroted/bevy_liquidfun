@@ -2,7 +2,7 @@ use std::pin::Pin;
 
 use autocxx::WithinBox;
 use bevy::{
-    ecs::reflect::ReflectComponent,
+    ecs::{entity::{EntityMapper, MapEntities}, reflect::ReflectComponent},
     prelude::{Component, Entity},
     reflect::Reflect,
     utils::default,
@@ -19,24 +19,43 @@ use crate::collision::b2Shape;
 #[reflect(Component)]
 #[type_path = "bevy_liquidfun"]
 pub struct b2Fixture {
-    body: Entity,
     def: b2FixtureDef,
 }
 
 impl b2Fixture {
-    pub fn new(body: Entity, fixture_def: &b2FixtureDef) -> Self {
+    pub fn new(fixture_def: &b2FixtureDef) -> Self {
         b2Fixture {
-            body,
             def: (*fixture_def).clone(),
+        }
+    }
+    pub fn def(&self) -> &b2FixtureDef {
+        &self.def
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+#[type_path = "bevy_liquidfun"]
+pub struct b2FixtureBody {
+    pub(crate) body: Entity,
+}
+
+impl b2FixtureBody {
+    pub(crate) fn new(body: Entity) -> Self {
+        Self {
+            body
         }
     }
 
     pub fn body(&self) -> Entity {
         self.body
     }
+}
 
-    pub fn def(&self) -> &b2FixtureDef {
-        &self.def
+impl MapEntities for b2FixtureBody {
+    fn map_entities<M: EntityMapper>(&mut self, entity_mapper: &mut M) {
+        self.body = entity_mapper.map_entity(self.body);
     }
 }
 

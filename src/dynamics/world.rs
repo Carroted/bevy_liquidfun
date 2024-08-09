@@ -16,6 +16,7 @@ use libliquidfun_sys::box2d::{
 use crate::{
     dynamics::{
         b2Body,
+        b2BodyFixtures,
         b2ContactListener,
         b2Fixture,
         b2Joint,
@@ -244,10 +245,10 @@ impl b2WorldImpl {
     pub(crate) fn create_fixture(
         &mut self,
         fixture: (Entity, &mut b2Fixture),
-        body: (Entity, &mut b2Body),
+        body: (Entity, &mut b2BodyFixtures),
     ) {
         let (fixture_entity, fixture_component) = fixture;
-        let (body_entity, body_component) = body;
+        let (body_entity, body_fixtures) = body;
 
         let mut body_ptr = self.body_ptr_mut(body_entity).unwrap();
         let mut b2fixture_def = fixture_component.def().to_ffi();
@@ -263,8 +264,8 @@ impl b2WorldImpl {
             self.fixture_ptrs.insert(fixture_entity, ffi_fixture);
         }
 
-        if !body_component.fixtures.contains(&fixture_entity) {
-            body_component.fixtures.push(fixture_entity);
+        if !body_fixtures.fixtures.contains(&fixture_entity) {
+            body_fixtures.fixtures.push(fixture_entity);
         }
 
         let fixtures_for_body = self.body_to_fixtures.entry(body.0).or_default();

@@ -9,7 +9,7 @@ use bevy_liquidfun::{
         b2BodyCommands,
         b2BodyDef,
         b2BodyType,
-        b2Fixture,
+        b2FixtureBody,
         b2FixtureDef,
         b2World,
         ExternalForce,
@@ -107,14 +107,14 @@ fn setup(mut commands: Commands) {
 }
 
 fn apply_force(
-    query: Query<(&b2Fixture, &b2BodiesInContact), With<Sensor>>,
+    query: Query<(&b2FixtureBody, &b2BodiesInContact), With<Sensor>>,
     transforms: Query<&Transform>,
     mut external_forces: Query<&mut ExternalForce>,
 ) {
-    for (fixture, bodies) in &query {
+    for (fixture_body, bodies) in &query {
         for body in bodies.contacts() {
             let position = transforms.get(*body).unwrap().translation;
-            let center = transforms.get(fixture.body()).unwrap().translation;
+            let center = transforms.get(fixture_body.body()).unwrap().translation;
             let mut external_force = external_forces.get_mut(*body).unwrap();
             let direction = (center - position).normalize();
 

@@ -15,12 +15,14 @@ use crate::{
         b2BeginContactEvent,
         b2BodiesInContact,
         b2Body,
+        b2BodyFixtures,
         b2BodyType,
         b2Contact,
         b2Contacts,
         b2DistanceJoint,
         b2EndContactEvent,
         b2Fixture,
+        b2FixtureBody,
         b2FixturesInContact,
         b2Joint,
         b2MotorJoint,
@@ -78,9 +80,11 @@ impl Plugin for LiquidFunPlugin {
             .insert_resource(self.settings.clone())
             .init_resource::<b2Contacts>()
             .register_type::<b2Body>()
+            .register_type::<b2BodyFixtures>()
             .register_type::<b2BodyType>()
             .register_type::<HashSet<Entity>>()
             .register_type::<b2Fixture>()
+            .register_type::<b2FixtureBody>()
             .register_type::<ExternalForce>()
             .register_type::<ExternalImpulse>()
             .register_type::<ExternalTorque>()
@@ -225,11 +229,13 @@ fn clear_events<T: 'static + Send + Sync + Event>(mut events: ResMut<Events<T>>)
 }
 
 fn create_bodies(
+    mut commands: Commands,
     mut b2_world: ResMut<b2World>,
     mut added: Query<(Entity, &mut b2Body), Added<b2Body>>,
     mut body_change_tracker: ResMut<BodyChangeTracker>,
 ) {
     for (entity, mut body) in added.iter_mut() {
+        commands.entity(entity).insert(b2BodyFixtures::new());
         b2_world.inner().create_body(entity, &mut body);
         body_change_tracker
             .last_sync_ticks
@@ -237,16 +243,42 @@ fn create_bodies(
     }
 }
 
+fn find_parent_body(
+    fixture_entity: Entity,
+    bodies: &Query<(Entity, &mut b2BodyFixtures)>,
+    parents: &Query<(Entity, &Parent)>,
+) -> Entity {
+    let mut current_entity = fixture_entity;
+    loop {
+        if let Ok((body_entity, _)) = bodies.get(current_entity) {
+            return body_entity;
+        } else {
+            let Ok((_, parent)) = parents.get(current_entity) else {
+                panic!("Could not find parent b2Body for b2Fixture on entity: {fixture_entity}");
+            };
+            current_entity = parent.get();
+        }
+    }
+}
+
 fn create_fixtures(
+    mut commands: Commands,
     mut b2_world: ResMut<b2World>,
     mut added: Query<(Entity, &mut b2Fixture), Added<b2Fixture>>,
-    mut bodies: Query<(Entity, &mut b2Body)>,
+    parents: Query<(Entity, &Parent)>,
+    mut bodies: Query<(Entity, &mut b2BodyFixtures)>,
 ) {
     for (fixture_entity, mut fixture) in added.iter_mut() {
-        let (body_entity, mut body) = bodies.get_mut(fixture.body()).unwrap();
-        b2_world
-            .inner()
-            .create_fixture((fixture_entity, &mut fixture), (body_entity, &mut body));
+        let body_entity = find_parent_body(fixture_entity, &bodies, &parents);
+        let (body_entity, mut body_fixtures) = bodies.get_mut(body_entity).unwrap();
+        b2_world.inner().create_fixture(
+            (fixture_entity, &mut fixture),
+            (body_entity, &mut body_fixtures),
+        );
+
+        commands
+            .entity(fixture_entity)
+            .insert(b2FixtureBody::new(body_entity));
     }
 }
 
@@ -694,14 +726,14 @@ impl Plugin for LiquidFunDebugDrawPlugin {
 }
 
 fn draw_fixtures(
-    fixtures: Query<(&b2Fixture, &DebugDrawFixtures)>,
+    fixtures: Query<(&b2Fixture, &b2FixtureBody, &DebugDrawFixtures)>,
     bodies: Query<(&b2Body, &GlobalTransform)>,
     mut gizmos: Gizmos,
 ) {
     let to_global =
         |transform: &GlobalTransform, p: Vec2| transform.transform_point(p.extend(0.)).truncate();
-    for (fixture, debug_draw_fixtures) in fixtures.iter() {
-        let body_entity = fixture.body();
+    for (fixture, fixture_body, debug_draw_fixtures) in fixtures.iter() {
+        let body_entity = fixture_body.body();
         let Ok((body, transform)) = bodies.get(body_entity) else {
             continue;
         };

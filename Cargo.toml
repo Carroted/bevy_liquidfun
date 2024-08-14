@@ -14,7 +14,7 @@ keywords = ["liquidfun", "box2d", "physics", "bevy"]
 autocxx = "0.26.0"
 bitflags = "2.4.1"
 bevy = "0.14.0"
-libliquidfun-sys = "0.3.0"
+libliquidfun-sys = "0.4.0"
 
 bevy-inspector-egui = { version = "0.25.0", optional = true }
 

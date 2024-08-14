@@ -7,9 +7,9 @@ A Bevy friendly wrapper of Box2D and LiquidFun.
 This crate wraps [libliquidfun-sys](https://github.com/mmatvein/libliquidfun-sys) to integrate Box2D and LiquidFun with the [Bevy game engine](https://github.com/bevyengine/bevy).
 
 ### Remarks
-- The library is not fully featured yet. It has been developed with 'Example Driven Development' so far, which means that the examples showcase _everything_ available at this moment.
-- Feedback on the APIs, usability & overall code quality is very welcome. I am not very accustomed to Rust and it's a learning process.
-- Pull Requests are welcome, but this crate is so early in development that it is important for me to have full and thorough understanding of all the bits that go into it.
+- The library is not fully featured yet. It has been developed with the needs of our game in mind, so the implemented features reflect what we've needed. Early on "Example Driven Development" was used, by porting over regular Box2D examples.
+- Feedback on the APIs, usability & overall code quality is very welcome.
+- Pull Requests are welcome, but this crate is very much a work in progress alongside our game, so we need full ownership of what goes into the codebase.
  
 ### Acknowledgements
 This crate is made possible by excellent prior work by others. Huge thanks go to:
